@@ -1104,3 +1104,81 @@ pub fn nary_add_two(img1: &Image, img2: &Image) -> Result<Image, String> {
 pub fn nary_maximum_two(img1: &Image, img2: &Image) -> Result<Image, String> {
     wrap(ffi::filter_nary_maximum_two(&img1.inner, &img2.inner))
 }
+
+// ── Remaining image filters ────────────────────────────────────────────────
+
+pub fn change_label_label_map(image: &Image, change_map_pairs: &[f64]) -> Result<Image, String> {
+    wrap(ffi::filter_change_label_label_map(&image.inner, change_map_pairs))
+}
+
+/// seeds: flat [x0,y0,...] with stride=dim per seed point
+pub fn colliding_fronts(image: &Image, seeds1: &[u32], seeds2: &[u32], dim: u32, apply_connectivity: bool, negative_epsilon: f64, stop_on_targets: bool) -> Result<Image, String> {
+    wrap(ffi::filter_colliding_fronts(&image.inner, seeds1, seeds2, dim, apply_connectivity, negative_epsilon, stop_on_targets))
+}
+
+/// seeds: flat [x0,y0,...] with stride=dim per seed point
+pub fn confidence_connected(image: &Image, seeds: &[u32], dim: u32, number_of_iterations: u32, multiplier: f64, initial_neighborhood_radius: u32, replace_value: u8) -> Result<Image, String> {
+    wrap(ffi::filter_confidence_connected(&image.inner, seeds, dim, number_of_iterations, multiplier, initial_neighborhood_radius, replace_value))
+}
+
+/// trial_points: flat [x0,y0,...] with stride=dim per point
+pub fn fast_marching_upwind_gradient(image: &Image, trial_points: &[u32], dim: u32, normalization_factor: f64, stopping_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_fast_marching_upwind_gradient(&image.inner, trial_points, dim, normalization_factor, stopping_value))
+}
+
+pub fn inverse_displacement_field(image: &Image, size: &[u32], output_origin: &[f64], output_spacing: &[f64], subsampling_factor: u32) -> Result<Image, String> {
+    wrap(ffi::filter_inverse_displacement_field(&image.inner, size, output_origin, output_spacing, subsampling_factor))
+}
+
+pub fn invert_displacement_field(image: &Image, max_iterations: u32, max_error_tolerance: f64, mean_error_tolerance: f64, enforce_boundary_condition: bool) -> Result<Image, String> {
+    wrap(ffi::filter_invert_displacement_field(&image.inner, max_iterations, max_error_tolerance, mean_error_tolerance, enforce_boundary_condition))
+}
+
+pub fn iterative_inverse_displacement_field(image: &Image, number_of_iterations: u32, stop_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_iterative_inverse_displacement_field(&image.inner, number_of_iterations, stop_value))
+}
+
+pub fn paste(dst: &Image, src: &Image, source_size: &[u32], source_index: &[i32], destination_index: &[i32]) -> Result<Image, String> {
+    wrap(ffi::filter_paste(&dst.inner, &src.inner, source_size, source_index, destination_index))
+}
+
+pub fn patch_based_denoising(image: &Image, kernel_bandwidth_sigma: f64, patch_radius: u32, number_of_iterations: u32, number_of_sample_patches: u32, noise_model: i32, noise_sigma: f64) -> Result<Image, String> {
+    wrap(ffi::filter_patch_based_denoising(&image.inner, kernel_bandwidth_sigma, patch_radius, number_of_iterations, number_of_sample_patches, noise_model, noise_sigma))
+}
+
+pub fn canny_segmentation_level_set(initial: &Image, feature: &Image, threshold: f64, variance: f64, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, advection_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<Image, String> {
+    wrap(ffi::filter_canny_segmentation_level_set(&initial.inner, &feature.inner, threshold, variance, max_rms_error, propagation_scaling, curvature_scaling, advection_scaling, number_of_iterations, reverse_expansion_direction))
+}
+
+pub fn geodesic_active_contour_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, advection_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<Image, String> {
+    wrap(ffi::filter_geodesic_active_contour_level_set(&initial.inner, &feature.inner, max_rms_error, propagation_scaling, curvature_scaling, advection_scaling, number_of_iterations, reverse_expansion_direction))
+}
+
+pub fn laplacian_segmentation_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<Image, String> {
+    wrap(ffi::filter_laplacian_segmentation_level_set(&initial.inner, &feature.inner, max_rms_error, propagation_scaling, curvature_scaling, number_of_iterations, reverse_expansion_direction))
+}
+
+pub fn shape_detection_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<Image, String> {
+    wrap(ffi::filter_shape_detection_level_set(&initial.inner, &feature.inner, max_rms_error, propagation_scaling, curvature_scaling, number_of_iterations, reverse_expansion_direction))
+}
+
+pub fn threshold_segmentation_level_set(initial: &Image, feature: &Image, lower_threshold: f64, upper_threshold: f64, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<Image, String> {
+    wrap(ffi::filter_threshold_segmentation_level_set(&initial.inner, &feature.inner, lower_threshold, upper_threshold, max_rms_error, propagation_scaling, curvature_scaling, number_of_iterations, reverse_expansion_direction))
+}
+
+pub fn scalar_chan_vese_level_set(initial: &Image, feature: &Image, max_rms_error: f64, number_of_iterations: u32, lambda1: f64, lambda2: f64, epsilon: f64, curvature_weight: f64, area_weight: f64) -> Result<Image, String> {
+    wrap(ffi::filter_scalar_chan_vese_level_set(&initial.inner, &feature.inner, max_rms_error, number_of_iterations, lambda1, lambda2, epsilon, curvature_weight, area_weight))
+}
+
+/// seeds: flat [x0,y0,...] with stride=dim per seed point
+pub fn vector_confidence_connected(image: &Image, seeds: &[u32], dim: u32, number_of_iterations: u32, multiplier: f64, initial_neighborhood_radius: u32, replace_value: u8) -> Result<Image, String> {
+    wrap(ffi::filter_vector_confidence_connected(&image.inner, seeds, dim, number_of_iterations, multiplier, initial_neighborhood_radius, replace_value))
+}
+
+pub fn warp_image(image: &Image, displacement_field: &Image, interpolator: i32, edge_padding_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_warp_image(&image.inner, &displacement_field.inner, interpolator, edge_padding_value))
+}
+
+pub fn transform_geometry(image: &Image, transform: &crate::transform::Transform) -> Result<Image, String> {
+    wrap(ffi::filter_transform_geometry(&image.inner, &transform.inner))
+}

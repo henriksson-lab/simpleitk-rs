@@ -310,6 +310,40 @@ pub mod ffi {
         fn filter_nary_add_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
         fn filter_nary_maximum_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
 
+        // ── Remaining image filters ──────────────────────────────────────
+        fn filter_change_label_label_map(img: &Image, change_map_pairs: &[f64]) -> Result<UniquePtr<Image>>;
+        fn filter_colliding_fronts(img: &Image, seeds1: &[u32], seeds2: &[u32], dim: u32, apply_connectivity: bool, negative_epsilon: f64, stop_on_targets: bool) -> Result<UniquePtr<Image>>;
+        fn filter_confidence_connected(img: &Image, seeds: &[u32], dim: u32, number_of_iterations: u32, multiplier: f64, initial_neighborhood_radius: u32, replace_value: u8) -> Result<UniquePtr<Image>>;
+        fn filter_fast_marching_upwind_gradient(img: &Image, trial_points: &[u32], dim: u32, normalization_factor: f64, stopping_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_inverse_displacement_field(img: &Image, size: &[u32], output_origin: &[f64], output_spacing: &[f64], subsampling_factor: u32) -> Result<UniquePtr<Image>>;
+        fn filter_invert_displacement_field(img: &Image, max_iterations: u32, max_error_tolerance: f64, mean_error_tolerance: f64, enforce_boundary_condition: bool) -> Result<UniquePtr<Image>>;
+        fn filter_iterative_inverse_displacement_field(img: &Image, number_of_iterations: u32, stop_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_paste(dst: &Image, src: &Image, source_size: &[u32], source_index: &[i32], destination_index: &[i32]) -> Result<UniquePtr<Image>>;
+        fn filter_patch_based_denoising(img: &Image, kernel_bandwidth_sigma: f64, patch_radius: u32, number_of_iterations: u32, number_of_sample_patches: u32, noise_model: i32, noise_sigma: f64) -> Result<UniquePtr<Image>>;
+        fn filter_canny_segmentation_level_set(initial: &Image, feature: &Image, threshold: f64, variance: f64, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, advection_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<UniquePtr<Image>>;
+        fn filter_geodesic_active_contour_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, advection_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<UniquePtr<Image>>;
+        fn filter_laplacian_segmentation_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<UniquePtr<Image>>;
+        fn filter_shape_detection_level_set(initial: &Image, feature: &Image, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<UniquePtr<Image>>;
+        fn filter_threshold_segmentation_level_set(initial: &Image, feature: &Image, lower_threshold: f64, upper_threshold: f64, max_rms_error: f64, propagation_scaling: f64, curvature_scaling: f64, number_of_iterations: u32, reverse_expansion_direction: bool) -> Result<UniquePtr<Image>>;
+        fn filter_scalar_chan_vese_level_set(initial: &Image, feature: &Image, max_rms_error: f64, number_of_iterations: u32, lambda1: f64, lambda2: f64, epsilon: f64, curvature_weight: f64, area_weight: f64) -> Result<UniquePtr<Image>>;
+        fn filter_vector_confidence_connected(img: &Image, seeds: &[u32], dim: u32, number_of_iterations: u32, multiplier: f64, initial_neighborhood_radius: u32, replace_value: u8) -> Result<UniquePtr<Image>>;
+        fn filter_warp_image(img: &Image, displacement_field: &Image, interpolator: i32, edge_padding_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_transform_geometry(img: &Image, tx: &Transform) -> Result<UniquePtr<Image>>;
+
+        // ── Measurement functions ────────────────────────────────────────
+        fn measure_hash(img: &Image, hash_function: i32) -> Result<String>;
+        fn measure_min_max(img: &Image) -> Vec<f64>;
+        fn measure_statistics(img: &Image) -> Vec<f64>;
+        fn measure_similarity_index(img1: &Image, img2: &Image) -> f64;
+        fn measure_hausdorff_distance(img1: &Image, img2: &Image) -> Vec<f64>;
+        fn measure_label_overlap(source: &Image, target: &Image) -> Vec<f64>;
+        fn measure_label_stats_for_label(img: &Image, label_img: &Image, label: i64) -> Vec<f64>;
+        fn measure_label_stats_labels(img: &Image, label_img: &Image) -> Vec<i64>;
+        fn measure_label_shape_for_label(img: &Image, label: i64, background_value: f64) -> Vec<f64>;
+        fn measure_label_shape_labels(img: &Image, background_value: f64) -> Vec<i64>;
+        fn measure_label_intensity_for_label(img: &Image, feature_img: &Image, label: i64, background_value: f64) -> Vec<f64>;
+        fn measure_label_intensity_labels(img: &Image, feature_img: &Image, background_value: f64) -> Vec<i64>;
+
         // ── Transforms ───────────────────────────────────────────────────
         type Transform;
 

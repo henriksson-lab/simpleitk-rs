@@ -6,6 +6,7 @@
 namespace sitk_rs {
 
 using Image = itk::simple::Image;
+using Transform = itk::simple::Transform;
 
 std::unique_ptr<Image> read_image(rust::Str path);
 void write_image(const Image& image, rust::Str path);
@@ -311,8 +312,44 @@ std::unique_ptr<Image> filter_nary_add_two(const Image& img1, const Image& img2)
 std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& img2);
 
 
+// ── Remaining image filters ────────────────────────────────────────────────
+// Seeds helpers: flat [x0,y0,...] with stride=dim per point
+
+std::unique_ptr<Image> filter_change_label_label_map(const Image& img, rust::Slice<const double> change_map_pairs);
+std::unique_ptr<Image> filter_colliding_fronts(const Image& img, rust::Slice<const uint32_t> seeds1, rust::Slice<const uint32_t> seeds2, uint32_t dim, bool apply_connectivity, double negative_epsilon, bool stop_on_targets);
+std::unique_ptr<Image> filter_confidence_connected(const Image& img, rust::Slice<const uint32_t> seeds, uint32_t dim, uint32_t number_of_iterations, double multiplier, uint32_t initial_neighborhood_radius, uint8_t replace_value);
+std::unique_ptr<Image> filter_fast_marching_upwind_gradient(const Image& img, rust::Slice<const uint32_t> trial_points, uint32_t dim, double normalization_factor, double stopping_value);
+std::unique_ptr<Image> filter_inverse_displacement_field(const Image& img, rust::Slice<const uint32_t> size, rust::Slice<const double> output_origin, rust::Slice<const double> output_spacing, uint32_t subsampling_factor);
+std::unique_ptr<Image> filter_invert_displacement_field(const Image& img, uint32_t max_iterations, double max_error_tolerance, double mean_error_tolerance, bool enforce_boundary_condition);
+std::unique_ptr<Image> filter_iterative_inverse_displacement_field(const Image& img, uint32_t number_of_iterations, double stop_value);
+std::unique_ptr<Image> filter_paste(const Image& dst, const Image& src, rust::Slice<const uint32_t> source_size, rust::Slice<const int32_t> source_index, rust::Slice<const int32_t> destination_index);
+std::unique_ptr<Image> filter_patch_based_denoising(const Image& img, double kernel_bandwidth_sigma, uint32_t patch_radius, uint32_t number_of_iterations, uint32_t number_of_sample_patches, int32_t noise_model, double noise_sigma);
+std::unique_ptr<Image> filter_canny_segmentation_level_set(const Image& initial, const Image& feature, double threshold, double variance, double max_rms_error, double propagation_scaling, double curvature_scaling, double advection_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction);
+std::unique_ptr<Image> filter_geodesic_active_contour_level_set(const Image& initial, const Image& feature, double max_rms_error, double propagation_scaling, double curvature_scaling, double advection_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction);
+std::unique_ptr<Image> filter_laplacian_segmentation_level_set(const Image& initial, const Image& feature, double max_rms_error, double propagation_scaling, double curvature_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction);
+std::unique_ptr<Image> filter_shape_detection_level_set(const Image& initial, const Image& feature, double max_rms_error, double propagation_scaling, double curvature_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction);
+std::unique_ptr<Image> filter_threshold_segmentation_level_set(const Image& initial, const Image& feature, double lower_threshold, double upper_threshold, double max_rms_error, double propagation_scaling, double curvature_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction);
+std::unique_ptr<Image> filter_scalar_chan_vese_level_set(const Image& initial, const Image& feature, double max_rms_error, uint32_t number_of_iterations, double lambda1, double lambda2, double epsilon, double curvature_weight, double area_weight);
+std::unique_ptr<Image> filter_vector_confidence_connected(const Image& img, rust::Slice<const uint32_t> seeds, uint32_t dim, uint32_t number_of_iterations, double multiplier, uint32_t initial_neighborhood_radius, uint8_t replace_value);
+std::unique_ptr<Image> filter_warp_image(const Image& img, const Image& displacement_field, int32_t interpolator, double edge_padding_value);
+std::unique_ptr<Image> filter_transform_geometry(const Image& img, const Transform& tx);
+
+// ── Measurement functions ───────────────────────────────────────────────────
+rust::String  measure_hash(const Image& img, int32_t hash_function);
+rust::Vec<double> measure_min_max(const Image& img);
+rust::Vec<double> measure_statistics(const Image& img);
+double        measure_similarity_index(const Image& img1, const Image& img2);
+rust::Vec<double> measure_hausdorff_distance(const Image& img1, const Image& img2);
+rust::Vec<double> measure_label_overlap(const Image& source, const Image& target);
+// Per-label statistics (run filter once, query one label)
+rust::Vec<double> measure_label_stats_for_label(const Image& img, const Image& label_img, int64_t label);
+rust::Vec<int64_t> measure_label_stats_labels(const Image& img, const Image& label_img);
+rust::Vec<double> measure_label_shape_for_label(const Image& img, int64_t label, double background_value);
+rust::Vec<int64_t> measure_label_shape_labels(const Image& img, double background_value);
+rust::Vec<double> measure_label_intensity_for_label(const Image& img, const Image& feature_img, int64_t label, double background_value);
+rust::Vec<int64_t> measure_label_intensity_labels(const Image& img, const Image& feature_img, double background_value);
+
 // ── Transforms ─────────────────────────────────────────────────────────────
-using Transform = itk::simple::Transform;
 
 // Factory functions
 std::unique_ptr<Transform> new_affine_transform(uint32_t dimensions);

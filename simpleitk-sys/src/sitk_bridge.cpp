@@ -1231,6 +1231,383 @@ std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& i
     return std::make_unique<Image>(itk::simple::NaryMaximum(std::vector<itk::simple::Image>{img1, img2}));
 }
 
+// ── Remaining image filters ────────────────────────────────────────────────
+
+static std::vector<std::vector<unsigned int>> seeds_from_flat(
+    rust::Slice<const uint32_t> flat, uint32_t dim)
+{
+    std::vector<std::vector<unsigned int>> seeds;
+    if (dim == 0) return seeds;
+    for (size_t i = 0; i + dim <= flat.size(); i += dim) {
+        std::vector<unsigned int> pt;
+        for (uint32_t d = 0; d < dim; ++d) pt.push_back(flat[i+d]);
+        seeds.push_back(pt);
+    }
+    return seeds;
+}
+
+std::unique_ptr<Image> filter_change_label_label_map(const Image& img, rust::Slice<const double> change_map_pairs) {
+    itk::simple::ChangeLabelLabelMapFilter f;
+    std::map<double,double> m;
+    for (size_t i = 0; i + 1 < change_map_pairs.size(); i += 2)
+        m[change_map_pairs[i]] = change_map_pairs[i+1];
+    f.SetChangeMap(m);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_colliding_fronts(const Image& img,
+    rust::Slice<const uint32_t> seeds1, rust::Slice<const uint32_t> seeds2,
+    uint32_t dim, bool apply_connectivity, double negative_epsilon, bool stop_on_targets)
+{
+    itk::simple::CollidingFrontsImageFilter f;
+    f.SetSeedPoints1(seeds_from_flat(seeds1, dim));
+    f.SetSeedPoints2(seeds_from_flat(seeds2, dim));
+    f.SetApplyConnectivity(apply_connectivity);
+    f.SetNegativeEpsilon(negative_epsilon);
+    f.SetStopOnTargets(stop_on_targets);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_confidence_connected(const Image& img,
+    rust::Slice<const uint32_t> seeds, uint32_t dim,
+    uint32_t number_of_iterations, double multiplier,
+    uint32_t initial_neighborhood_radius, uint8_t replace_value)
+{
+    itk::simple::ConfidenceConnectedImageFilter f;
+    f.SetSeedList(seeds_from_flat(seeds, dim));
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetMultiplier(multiplier);
+    f.SetInitialNeighborhoodRadius(initial_neighborhood_radius);
+    f.SetReplaceValue(replace_value);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_fast_marching_upwind_gradient(const Image& img,
+    rust::Slice<const uint32_t> trial_points, uint32_t dim,
+    double normalization_factor, double stopping_value)
+{
+    itk::simple::FastMarchingUpwindGradientImageFilter f;
+    f.SetTrialPoints(seeds_from_flat(trial_points, dim));
+    f.SetNormalizationFactor(normalization_factor);
+    f.SetTargetOffset(stopping_value);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_inverse_displacement_field(const Image& img,
+    rust::Slice<const uint32_t> size,
+    rust::Slice<const double> output_origin,
+    rust::Slice<const double> output_spacing,
+    uint32_t subsampling_factor)
+{
+    itk::simple::InverseDisplacementFieldImageFilter f;
+    f.SetSize(std::vector<unsigned int>(size.data(), size.data()+size.size()));
+    f.SetOutputOrigin(std::vector<double>(output_origin.data(), output_origin.data()+output_origin.size()));
+    f.SetOutputSpacing(std::vector<double>(output_spacing.data(), output_spacing.data()+output_spacing.size()));
+    f.SetSubsamplingFactor(subsampling_factor);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_invert_displacement_field(const Image& img,
+    uint32_t max_iterations, double max_error_tolerance,
+    double mean_error_tolerance, bool enforce_boundary_condition)
+{
+    itk::simple::InvertDisplacementFieldImageFilter f;
+    f.SetMaximumNumberOfIterations(max_iterations);
+    f.SetMaxErrorToleranceThreshold(max_error_tolerance);
+    f.SetMeanErrorToleranceThreshold(mean_error_tolerance);
+    f.SetEnforceBoundaryCondition(enforce_boundary_condition);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_iterative_inverse_displacement_field(const Image& img,
+    uint32_t number_of_iterations, double stop_value)
+{
+    itk::simple::IterativeInverseDisplacementFieldImageFilter f;
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetStopValue(stop_value);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_paste(const Image& dst, const Image& src,
+    rust::Slice<const uint32_t> source_size,
+    rust::Slice<const int32_t> source_index,
+    rust::Slice<const int32_t> destination_index)
+{
+    itk::simple::PasteImageFilter f;
+    f.SetSourceSize(std::vector<unsigned int>(source_size.data(), source_size.data()+source_size.size()));
+    f.SetSourceIndex(std::vector<int>(source_index.data(), source_index.data()+source_index.size()));
+    f.SetDestinationIndex(std::vector<int>(destination_index.data(), destination_index.data()+destination_index.size()));
+    return std::make_unique<Image>(f.Execute(dst, src));
+}
+
+std::unique_ptr<Image> filter_patch_based_denoising(const Image& img,
+    double kernel_bandwidth_sigma, uint32_t patch_radius,
+    uint32_t number_of_iterations, uint32_t number_of_sample_patches,
+    int32_t noise_model, double noise_sigma)
+{
+    itk::simple::PatchBasedDenoisingImageFilter f;
+    f.SetKernelBandwidthSigma(kernel_bandwidth_sigma);
+    f.SetPatchRadius(patch_radius);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetNumberOfSamplePatches(number_of_sample_patches);
+    f.SetNoiseModel(static_cast<itk::simple::PatchBasedDenoisingImageFilter::NoiseModelType>(noise_model));
+    f.SetNoiseSigma(noise_sigma);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_canny_segmentation_level_set(const Image& initial, const Image& feature,
+    double threshold, double variance, double max_rms_error,
+    double propagation_scaling, double curvature_scaling, double advection_scaling,
+    uint32_t number_of_iterations, bool reverse_expansion_direction)
+{
+    itk::simple::CannySegmentationLevelSetImageFilter f;
+    f.SetThreshold(threshold);
+    f.SetVariance(variance);
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetPropagationScaling(propagation_scaling);
+    f.SetCurvatureScaling(curvature_scaling);
+    f.SetAdvectionScaling(advection_scaling);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetReverseExpansionDirection(reverse_expansion_direction);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_geodesic_active_contour_level_set(const Image& initial, const Image& feature,
+    double max_rms_error, double propagation_scaling, double curvature_scaling,
+    double advection_scaling, uint32_t number_of_iterations, bool reverse_expansion_direction)
+{
+    itk::simple::GeodesicActiveContourLevelSetImageFilter f;
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetPropagationScaling(propagation_scaling);
+    f.SetCurvatureScaling(curvature_scaling);
+    f.SetAdvectionScaling(advection_scaling);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetReverseExpansionDirection(reverse_expansion_direction);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_laplacian_segmentation_level_set(const Image& initial, const Image& feature,
+    double max_rms_error, double propagation_scaling, double curvature_scaling,
+    uint32_t number_of_iterations, bool reverse_expansion_direction)
+{
+    itk::simple::LaplacianSegmentationLevelSetImageFilter f;
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetPropagationScaling(propagation_scaling);
+    f.SetCurvatureScaling(curvature_scaling);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetReverseExpansionDirection(reverse_expansion_direction);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_shape_detection_level_set(const Image& initial, const Image& feature,
+    double max_rms_error, double propagation_scaling, double curvature_scaling,
+    uint32_t number_of_iterations, bool reverse_expansion_direction)
+{
+    itk::simple::ShapeDetectionLevelSetImageFilter f;
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetPropagationScaling(propagation_scaling);
+    f.SetCurvatureScaling(curvature_scaling);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetReverseExpansionDirection(reverse_expansion_direction);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_threshold_segmentation_level_set(const Image& initial, const Image& feature,
+    double lower_threshold, double upper_threshold,
+    double max_rms_error, double propagation_scaling, double curvature_scaling,
+    uint32_t number_of_iterations, bool reverse_expansion_direction)
+{
+    itk::simple::ThresholdSegmentationLevelSetImageFilter f;
+    f.SetLowerThreshold(lower_threshold);
+    f.SetUpperThreshold(upper_threshold);
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetPropagationScaling(propagation_scaling);
+    f.SetCurvatureScaling(curvature_scaling);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetReverseExpansionDirection(reverse_expansion_direction);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_scalar_chan_vese_level_set(const Image& initial, const Image& feature,
+    double max_rms_error, uint32_t number_of_iterations,
+    double lambda1, double lambda2, double epsilon,
+    double curvature_weight, double area_weight)
+{
+    itk::simple::ScalarChanAndVeseDenseLevelSetImageFilter f;
+    f.SetMaximumRMSError(max_rms_error);
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetLambda1(lambda1);
+    f.SetLambda2(lambda2);
+    f.SetEpsilon(epsilon);
+    f.SetCurvatureWeight(curvature_weight);
+    f.SetAreaWeight(area_weight);
+    return std::make_unique<Image>(f.Execute(initial, feature));
+}
+
+std::unique_ptr<Image> filter_vector_confidence_connected(const Image& img,
+    rust::Slice<const uint32_t> seeds, uint32_t dim,
+    uint32_t number_of_iterations, double multiplier,
+    uint32_t initial_neighborhood_radius, uint8_t replace_value)
+{
+    itk::simple::VectorConfidenceConnectedImageFilter f;
+    f.SetSeedList(seeds_from_flat(seeds, dim));
+    f.SetNumberOfIterations(number_of_iterations);
+    f.SetMultiplier(multiplier);
+    f.SetInitialNeighborhoodRadius(initial_neighborhood_radius);
+    f.SetReplaceValue(replace_value);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_warp_image(const Image& img, const Image& displacement_field,
+    int32_t interpolator, double edge_padding_value)
+{
+    itk::simple::WarpImageFilter f;
+    f.SetInterpolator(static_cast<itk::simple::InterpolatorEnum>(interpolator));
+    f.SetEdgePaddingValue(edge_padding_value);
+    return std::make_unique<Image>(f.Execute(img, displacement_field));
+}
+
+std::unique_ptr<Image> filter_transform_geometry(const Image& img, const Transform& tx) {
+    itk::simple::TransformGeometryImageFilter f;
+    return std::make_unique<Image>(f.Execute(img, tx));
+}
+
+// ── Measurement functions ───────────────────────────────────────────────────
+
+rust::String measure_hash(const Image& img, int32_t hash_function) {
+    itk::simple::HashImageFilter f;
+    f.SetHashFunction(static_cast<itk::simple::HashImageFilter::HashFunction>(hash_function));
+    return rust::String(f.Execute(img));
+}
+
+rust::Vec<double> measure_min_max(const Image& img) {
+    itk::simple::MinimumMaximumImageFilter f;
+    f.Execute(img);
+    rust::Vec<double> out;
+    out.push_back(f.GetMinimum());
+    out.push_back(f.GetMaximum());
+    return out;
+}
+
+rust::Vec<double> measure_statistics(const Image& img) {
+    itk::simple::StatisticsImageFilter f;
+    f.Execute(img);
+    rust::Vec<double> out;
+    out.push_back(f.GetMinimum());
+    out.push_back(f.GetMaximum());
+    out.push_back(f.GetMean());
+    out.push_back(f.GetSigma());
+    out.push_back(f.GetVariance());
+    out.push_back(f.GetSum());
+    return out;
+}
+
+double measure_similarity_index(const Image& img1, const Image& img2) {
+    itk::simple::SimilarityIndexImageFilter f;
+    f.Execute(img1, img2);
+    return f.GetSimilarityIndex();
+}
+
+rust::Vec<double> measure_hausdorff_distance(const Image& img1, const Image& img2) {
+    itk::simple::HausdorffDistanceImageFilter f;
+    f.Execute(img1, img2);
+    rust::Vec<double> out;
+    out.push_back(f.GetHausdorffDistance());
+    out.push_back(f.GetAverageHausdorffDistance());
+    return out;
+}
+
+rust::Vec<double> measure_label_overlap(const Image& source, const Image& target) {
+    itk::simple::LabelOverlapMeasuresImageFilter f;
+    f.Execute(source, target);
+    rust::Vec<double> out;
+    out.push_back(f.GetDiceCoefficient());
+    out.push_back(f.GetJaccardCoefficient());
+    out.push_back(f.GetVolumeSimilarity());
+    out.push_back(f.GetUnionOverlap());
+    out.push_back(f.GetMeanOverlap());
+    out.push_back(f.GetFalsePositiveError());
+    out.push_back(f.GetFalseNegativeError());
+    out.push_back(f.GetFalseDiscoveryRate());
+    return out;
+}
+
+rust::Vec<double> measure_label_stats_for_label(const Image& img, const Image& label_img, int64_t label) {
+    itk::simple::LabelStatisticsImageFilter f;
+    f.Execute(img, label_img);
+    rust::Vec<double> out;
+    out.push_back(f.GetMinimum(label));
+    out.push_back(f.GetMaximum(label));
+    out.push_back(f.GetMean(label));
+    out.push_back(f.GetSigma(label));
+    out.push_back(f.GetVariance(label));
+    out.push_back(f.GetSum(label));
+    out.push_back(static_cast<double>(f.GetCount(label)));
+    return out;
+}
+
+rust::Vec<int64_t> measure_label_stats_labels(const Image& img, const Image& label_img) {
+    itk::simple::LabelStatisticsImageFilter f;
+    f.Execute(img, label_img);
+    auto v = f.GetLabels();
+    rust::Vec<int64_t> out;
+    for (auto x : v) out.push_back(static_cast<int64_t>(x));
+    return out;
+}
+
+rust::Vec<double> measure_label_shape_for_label(const Image& img, int64_t label, double background_value) {
+    itk::simple::LabelShapeStatisticsImageFilter f;
+    f.SetBackgroundValue(background_value);
+    f.Execute(img);
+    rust::Vec<double> out;
+    out.push_back(static_cast<double>(f.GetNumberOfPixels(label)));
+    out.push_back(f.GetPhysicalSize(label));
+    out.push_back(f.GetElongation(label));
+    out.push_back(f.GetRoundness(label));
+    out.push_back(f.GetFlatness(label));
+    out.push_back(f.GetEquivalentSphericalRadius(label));
+    auto centroid = f.GetCentroid(label);
+    for (auto x : centroid) out.push_back(x);
+    return out;
+}
+
+rust::Vec<int64_t> measure_label_shape_labels(const Image& img, double background_value) {
+    itk::simple::LabelShapeStatisticsImageFilter f;
+    f.SetBackgroundValue(background_value);
+    f.Execute(img);
+    auto v = f.GetLabels();
+    rust::Vec<int64_t> out;
+    for (auto x : v) out.push_back(static_cast<int64_t>(x));
+    return out;
+}
+
+rust::Vec<double> measure_label_intensity_for_label(const Image& img, const Image& feature_img, int64_t label, double background_value) {
+    itk::simple::LabelIntensityStatisticsImageFilter f;
+    f.SetBackgroundValue(background_value);
+    f.Execute(img, feature_img);
+    rust::Vec<double> out;
+    out.push_back(f.GetMinimum(label));
+    out.push_back(f.GetMaximum(label));
+    out.push_back(f.GetMean(label));
+    out.push_back(f.GetStandardDeviation(label));
+    out.push_back(f.GetVariance(label));
+    out.push_back(f.GetSum(label));
+    out.push_back(static_cast<double>(f.GetNumberOfPixels(label)));
+    out.push_back(f.GetElongation(label));
+    out.push_back(f.GetRoundness(label));
+    return out;
+}
+
+rust::Vec<int64_t> measure_label_intensity_labels(const Image& img, const Image& feature_img, double background_value) {
+    itk::simple::LabelIntensityStatisticsImageFilter f;
+    f.SetBackgroundValue(background_value);
+    f.Execute(img, feature_img);
+    auto v = f.GetLabels();
+    rust::Vec<int64_t> out;
+    for (auto x : v) out.push_back(static_cast<int64_t>(x));
+    return out;
+}
+
 // ── Transforms ─────────────────────────────────────────────────────────────
 
 std::unique_ptr<Transform> new_affine_transform(uint32_t dimensions) {
