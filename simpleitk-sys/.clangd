@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - "-std=c++17"
+    - "-I/Users/mahogny/git/ripp/simpleitk-rs/target/debug/build/simpleitk-sys-c4ed20f1812ad1b9/out/simpleitk_cmake_build/install/include/SimpleITK-2.4"
+    - "-I/Users/mahogny/git/ripp/simpleitk-rs/target/debug/build/simpleitk-sys-c4ed20f1812ad1b9/out/simpleitk_cmake_build/install/include/ITK-5.4"
+    - "-I/Users/mahogny/git/ripp/simpleitk-rs/target/cxxbridge"
+    - "-I/Users/mahogny/git/ripp/simpleitk-rs/simpleitk-sys"
+    - "-nostdinc++"
+    - "-isystem/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1"

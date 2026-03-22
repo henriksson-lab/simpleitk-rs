@@ -2,6 +2,8 @@
 name = "simpleitk"
 version = "0.1.0"
 edition = "2024"
+license = "Apache License 2.0"
+repository = "https://github.com/henriksson-lab/simpleitk-rs"
 
 [dependencies]
 simpleitk-sys = { path = "../simpleitk-sys" }
