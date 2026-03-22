@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "simpleitk-sys",
+    "simpleitk",
+]
+resolver = "2"

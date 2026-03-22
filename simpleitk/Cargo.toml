@@ -1,0 +1,8 @@
+[package]
+name = "simpleitk"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+simpleitk-sys = { path = "../simpleitk-sys" }
+cxx = "1.0"
