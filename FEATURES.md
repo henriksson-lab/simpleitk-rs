@@ -252,7 +252,7 @@ Status of SimpleITK 2.4.0 operations in this library.
 | `RelabelComponentImageFilter` | ✅ Implemented |
 | `RelabelLabelMapFilter` | ✅ Implemented |
 | `RenyiEntropyThresholdImageFilter` | ✅ Implemented |
-| `ResampleImageFilter` | ❌ Not implemented |
+| `ResampleImageFilter` | ✅ Implemented (`transform::resample`, `transform::resample_to_ref`) |
 | `RescaleIntensityImageFilter` | ✅ Implemented |
 | `RichardsonLucyDeconvolutionImageFilter` | ✅ Implemented |
 | `RoundImageFilter` | ✅ Implemented |
@@ -298,7 +298,7 @@ Status of SimpleITK 2.4.0 operations in this library.
 | `TileImageFilter` | ✅ Implemented |
 | `TobogganImageFilter` | ✅ Implemented |
 | `TransformGeometryImageFilter` | ❌ Not implemented |
-| `TransformToDisplacementFieldFilter` | ❌ Not implemented |
+| `TransformToDisplacementFieldFilter` | ✅ Implemented (`transform::transform_to_displacement_field`) |
 | `TriangleThresholdImageFilter` | ✅ Implemented |
 | `UnaryMinusImageFilter` | ✅ Implemented |
 | `UnsharpMaskImageFilter` | ✅ Implemented |
@@ -325,21 +325,21 @@ Status of SimpleITK 2.4.0 operations in this library.
 
 | Operation | Status |
 |-----------|--------|
-| `AffineTransform` | ❌ Not implemented |
-| `BSplineTransform` | ❌ Not implemented |
-| `CompositeTransform` | ❌ Not implemented |
-| `DisplacementFieldTransform` | ❌ Not implemented |
-| `Euler2DTransform` | ❌ Not implemented |
-| `Euler3DTransform` | ❌ Not implemented |
-| `ScaleTransform` | ❌ Not implemented |
-| `ScaleSkewVersor3DTransform` | ❌ Not implemented |
-| `ScaleVersor3DTransform` | ❌ Not implemented |
-| `Similarity2DTransform` | ❌ Not implemented |
-| `Similarity3DTransform` | ❌ Not implemented |
-| `TranslationTransform` | ❌ Not implemented |
-| `VersorRigid3DTransform` | ❌ Not implemented |
-| `VersorTransform` | ❌ Not implemented |
-| `ComposeScaleSkewVersor3DTransform` | ❌ Not implemented |
+| `AffineTransform` | ✅ Implemented (`Transform::affine`) |
+| `BSplineTransform` | ❌ Not implemented (coefficient image API not bridgeable simply) |
+| `CompositeTransform` | ✅ Implemented (`Transform::composite`) |
+| `DisplacementFieldTransform` | ✅ Implemented (`Transform::displacement_field`) |
+| `Euler2DTransform` | ✅ Implemented (`Transform::euler2d`) |
+| `Euler3DTransform` | ✅ Implemented (`Transform::euler3d`) |
+| `ScaleTransform` | ✅ Implemented (`Transform::scale`) |
+| `ScaleSkewVersor3DTransform` | ✅ Implemented (`Transform::scale_skew_versor3d`) |
+| `ScaleVersor3DTransform` | ✅ Implemented (`Transform::scale_versor3d`) |
+| `Similarity2DTransform` | ✅ Implemented (`Transform::similarity2d`) |
+| `Similarity3DTransform` | ✅ Implemented (`Transform::similarity3d`) |
+| `TranslationTransform` | ✅ Implemented (`Transform::translation`) |
+| `VersorRigid3DTransform` | ✅ Implemented (`Transform::versor_rigid3d`) |
+| `VersorTransform` | ✅ Implemented (`Transform::versor`) |
+| `ComposeScaleSkewVersor3DTransform` | ✅ Implemented (`Transform::scale_skew_versor3d`) |
 
 ## Image Sources
 

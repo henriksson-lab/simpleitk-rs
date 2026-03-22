@@ -309,5 +309,145 @@ pub mod ffi {
         fn filter_extract(img: &Image, size: &[u32], index: &[i32]) -> Result<UniquePtr<Image>>;
         fn filter_nary_add_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
         fn filter_nary_maximum_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
+
+        // ── Transforms ───────────────────────────────────────────────────
+        type Transform;
+
+        // Factory functions
+        fn new_affine_transform(dimensions: u32) -> Result<UniquePtr<Transform>>;
+        fn new_translation_transform(dimensions: u32) -> Result<UniquePtr<Transform>>;
+        fn new_scale_transform(dimensions: u32) -> Result<UniquePtr<Transform>>;
+        fn new_euler2d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_euler3d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_similarity2d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_similarity3d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_versor_transform() -> Result<UniquePtr<Transform>>;
+        fn new_versor_rigid3d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_scale_versor3d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_scale_skew_versor3d_transform() -> Result<UniquePtr<Transform>>;
+        fn new_composite_transform(dimensions: u32) -> Result<UniquePtr<Transform>>;
+        fn new_displacement_field_transform(dimensions: u32) -> Result<UniquePtr<Transform>>;
+        fn read_transform(path: &str) -> Result<UniquePtr<Transform>>;
+
+        // Base Transform methods (immutable)
+        fn transform_get_parameters(t: &Transform) -> Vec<f64>;
+        fn transform_get_fixed_parameters(t: &Transform) -> Vec<f64>;
+        fn transform_get_number_of_parameters(t: &Transform) -> u64;
+        fn transform_get_number_of_fixed_parameters(t: &Transform) -> u64;
+        fn transform_transform_point(t: &Transform, point: &[f64]) -> Vec<f64>;
+        fn transform_is_linear(t: &Transform) -> bool;
+        fn transform_get_dimension(t: &Transform) -> u32;
+        fn transform_get_name(t: &Transform) -> String;
+        fn transform_write(t: &Transform, path: &str) -> Result<()>;
+        fn transform_get_inverse(t: &Transform) -> Result<UniquePtr<Transform>>;
+
+        // Base Transform methods (mutable)
+        fn transform_set_parameters(t: Pin<&mut Transform>, params: &[f64]);
+        fn transform_set_fixed_parameters(t: Pin<&mut Transform>, params: &[f64]);
+        fn transform_set_identity(t: Pin<&mut Transform>);
+
+        // AffineTransform
+        fn affine_get_matrix(t: &Transform) -> Vec<f64>;
+        fn affine_get_center(t: &Transform) -> Vec<f64>;
+        fn affine_get_translation(t: &Transform) -> Vec<f64>;
+        fn affine_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+        fn affine_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn affine_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+
+        // TranslationTransform
+        fn translation_get_offset(t: &Transform) -> Vec<f64>;
+        fn translation_set_offset(t: Pin<&mut Transform>, offset: &[f64]);
+
+        // ScaleTransform
+        fn scale_get_scale(t: &Transform) -> Vec<f64>;
+        fn scale_get_center(t: &Transform) -> Vec<f64>;
+        fn scale_set_scale(t: Pin<&mut Transform>, scale: &[f64]);
+        fn scale_set_center(t: Pin<&mut Transform>, center: &[f64]);
+
+        // Euler2DTransform
+        fn euler2d_get_center(t: &Transform) -> Vec<f64>;
+        fn euler2d_get_angle(t: &Transform) -> f64;
+        fn euler2d_get_translation(t: &Transform) -> Vec<f64>;
+        fn euler2d_get_matrix(t: &Transform) -> Vec<f64>;
+        fn euler2d_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn euler2d_set_angle(t: Pin<&mut Transform>, angle: f64);
+        fn euler2d_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+        fn euler2d_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+
+        // Euler3DTransform
+        fn euler3d_get_center(t: &Transform) -> Vec<f64>;
+        fn euler3d_get_angle_x(t: &Transform) -> f64;
+        fn euler3d_get_angle_y(t: &Transform) -> f64;
+        fn euler3d_get_angle_z(t: &Transform) -> f64;
+        fn euler3d_get_translation(t: &Transform) -> Vec<f64>;
+        fn euler3d_get_matrix(t: &Transform) -> Vec<f64>;
+        fn euler3d_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn euler3d_set_rotation(t: Pin<&mut Transform>, angle_x: f64, angle_y: f64, angle_z: f64);
+        fn euler3d_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+        fn euler3d_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+        fn euler3d_set_compute_zyx(t: Pin<&mut Transform>, compute_zyx: bool);
+
+        // Similarity2DTransform
+        fn similarity2d_get_center(t: &Transform) -> Vec<f64>;
+        fn similarity2d_get_angle(t: &Transform) -> f64;
+        fn similarity2d_get_scale(t: &Transform) -> f64;
+        fn similarity2d_get_translation(t: &Transform) -> Vec<f64>;
+        fn similarity2d_get_matrix(t: &Transform) -> Vec<f64>;
+        fn similarity2d_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn similarity2d_set_angle(t: Pin<&mut Transform>, angle: f64);
+        fn similarity2d_set_scale(t: Pin<&mut Transform>, scale: f64);
+        fn similarity2d_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+        fn similarity2d_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+
+        // Similarity3DTransform
+        fn similarity3d_get_center(t: &Transform) -> Vec<f64>;
+        fn similarity3d_get_versor(t: &Transform) -> Vec<f64>;
+        fn similarity3d_get_scale(t: &Transform) -> f64;
+        fn similarity3d_get_translation(t: &Transform) -> Vec<f64>;
+        fn similarity3d_get_matrix(t: &Transform) -> Vec<f64>;
+        fn similarity3d_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn similarity3d_set_rotation_versor(t: Pin<&mut Transform>, versor: &[f64]);
+        fn similarity3d_set_rotation_axis_angle(t: Pin<&mut Transform>, axis: &[f64], angle: f64);
+        fn similarity3d_set_scale(t: Pin<&mut Transform>, scale: f64);
+        fn similarity3d_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+        fn similarity3d_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+
+        // VersorTransform
+        fn versor_get_center(t: &Transform) -> Vec<f64>;
+        fn versor_get_versor(t: &Transform) -> Vec<f64>;
+        fn versor_get_matrix(t: &Transform) -> Vec<f64>;
+        fn versor_set_center(t: Pin<&mut Transform>, center: &[f64]);
+        fn versor_set_rotation_versor(t: Pin<&mut Transform>, versor: &[f64]);
+        fn versor_set_rotation_axis_angle(t: Pin<&mut Transform>, axis: &[f64], angle: f64);
+        fn versor_set_matrix(t: Pin<&mut Transform>, matrix: &[f64]);
+
+        // VersorRigid3DTransform
+        fn versor_rigid3d_get_translation(t: &Transform) -> Vec<f64>;
+        fn versor_rigid3d_set_translation(t: Pin<&mut Transform>, translation: &[f64]);
+
+        // ScaleVersor3DTransform
+        fn scale_versor3d_get_scale(t: &Transform) -> Vec<f64>;
+        fn scale_versor3d_set_scale(t: Pin<&mut Transform>, scale: &[f64]);
+
+        // ScaleSkewVersor3DTransform
+        fn scale_skew_versor3d_get_skew(t: &Transform) -> Vec<f64>;
+        fn scale_skew_versor3d_set_skew(t: Pin<&mut Transform>, skew: &[f64]);
+
+        // CompositeTransform
+        fn composite_add_transform(t: Pin<&mut Transform>, to_add: &Transform) -> Result<()>;
+        fn composite_get_number_of_transforms(t: &Transform) -> Result<u32>;
+        fn composite_clear_transforms(t: Pin<&mut Transform>) -> Result<()>;
+        fn composite_flatten_transform(t: Pin<&mut Transform>) -> Result<()>;
+
+        // DisplacementFieldTransform
+        fn displacement_field_get_displacement_field(t: &Transform) -> Result<UniquePtr<Image>>;
+        fn displacement_field_set_displacement_field(t: Pin<&mut Transform>, field: &Image) -> Result<()>;
+        fn displacement_field_set_smoothing_off(t: Pin<&mut Transform>) -> Result<()>;
+        fn displacement_field_set_interpolator(t: Pin<&mut Transform>, interpolator: i32) -> Result<()>;
+
+        // Resample filters
+        fn filter_resample(img: &Image, tx: &Transform, interpolator: i32, default_pixel_value: f64, output_pixel_type: i32) -> Result<UniquePtr<Image>>;
+        fn filter_resample_to_ref(img: &Image, ref_img: &Image, tx: &Transform, interpolator: i32, default_pixel_value: f64, output_pixel_type: i32) -> Result<UniquePtr<Image>>;
+        fn filter_transform_to_displacement_field(tx: &Transform, output_pixel_type: i32, size: &[u32], origin: &[f64], spacing: &[f64]) -> Result<UniquePtr<Image>>;
     }
 }

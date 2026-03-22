@@ -310,4 +310,145 @@ std::unique_ptr<Image> filter_extract(const Image& img, rust::Slice<const uint32
 std::unique_ptr<Image> filter_nary_add_two(const Image& img1, const Image& img2);
 std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& img2);
 
+
+// ── Transforms ─────────────────────────────────────────────────────────────
+using Transform = itk::simple::Transform;
+
+// Factory functions
+std::unique_ptr<Transform> new_affine_transform(uint32_t dimensions);
+std::unique_ptr<Transform> new_translation_transform(uint32_t dimensions);
+std::unique_ptr<Transform> new_scale_transform(uint32_t dimensions);
+std::unique_ptr<Transform> new_euler2d_transform();
+std::unique_ptr<Transform> new_euler3d_transform();
+std::unique_ptr<Transform> new_similarity2d_transform();
+std::unique_ptr<Transform> new_similarity3d_transform();
+std::unique_ptr<Transform> new_versor_transform();
+std::unique_ptr<Transform> new_versor_rigid3d_transform();
+std::unique_ptr<Transform> new_scale_versor3d_transform();
+std::unique_ptr<Transform> new_scale_skew_versor3d_transform();
+std::unique_ptr<Transform> new_composite_transform(uint32_t dimensions);
+std::unique_ptr<Transform> read_transform(rust::Str path);
+
+// Base Transform methods (immutable)
+rust::Vec<double> transform_get_parameters(const Transform& t);
+rust::Vec<double> transform_get_fixed_parameters(const Transform& t);
+uint64_t          transform_get_number_of_parameters(const Transform& t);
+uint64_t          transform_get_number_of_fixed_parameters(const Transform& t);
+rust::Vec<double> transform_transform_point(const Transform& t, rust::Slice<const double> point);
+bool              transform_is_linear(const Transform& t);
+uint32_t          transform_get_dimension(const Transform& t);
+rust::String      transform_get_name(const Transform& t);
+void              transform_write(const Transform& t, rust::Str path);
+std::unique_ptr<Transform> transform_get_inverse(const Transform& t);
+
+// Base Transform methods (mutable)
+void transform_set_parameters(Transform& t, rust::Slice<const double> params);
+void transform_set_fixed_parameters(Transform& t, rust::Slice<const double> params);
+void transform_set_identity(Transform& t);
+
+// AffineTransform methods
+rust::Vec<double> affine_get_matrix(const Transform& t);
+rust::Vec<double> affine_get_center(const Transform& t);
+rust::Vec<double> affine_get_translation(const Transform& t);
+void affine_set_matrix(Transform& t, rust::Slice<const double> matrix);
+void affine_set_center(Transform& t, rust::Slice<const double> center);
+void affine_set_translation(Transform& t, rust::Slice<const double> translation);
+
+// TranslationTransform methods
+rust::Vec<double> translation_get_offset(const Transform& t);
+void translation_set_offset(Transform& t, rust::Slice<const double> offset);
+
+// ScaleTransform methods
+rust::Vec<double> scale_get_scale(const Transform& t);
+rust::Vec<double> scale_get_center(const Transform& t);
+void scale_set_scale(Transform& t, rust::Slice<const double> scale);
+void scale_set_center(Transform& t, rust::Slice<const double> center);
+
+// Euler2DTransform methods
+rust::Vec<double> euler2d_get_center(const Transform& t);
+double            euler2d_get_angle(const Transform& t);
+rust::Vec<double> euler2d_get_translation(const Transform& t);
+rust::Vec<double> euler2d_get_matrix(const Transform& t);
+void euler2d_set_center(Transform& t, rust::Slice<const double> center);
+void euler2d_set_angle(Transform& t, double angle);
+void euler2d_set_translation(Transform& t, rust::Slice<const double> translation);
+void euler2d_set_matrix(Transform& t, rust::Slice<const double> matrix);
+
+// Euler3DTransform methods
+rust::Vec<double> euler3d_get_center(const Transform& t);
+double            euler3d_get_angle_x(const Transform& t);
+double            euler3d_get_angle_y(const Transform& t);
+double            euler3d_get_angle_z(const Transform& t);
+rust::Vec<double> euler3d_get_translation(const Transform& t);
+rust::Vec<double> euler3d_get_matrix(const Transform& t);
+void euler3d_set_center(Transform& t, rust::Slice<const double> center);
+void euler3d_set_rotation(Transform& t, double angle_x, double angle_y, double angle_z);
+void euler3d_set_translation(Transform& t, rust::Slice<const double> translation);
+void euler3d_set_matrix(Transform& t, rust::Slice<const double> matrix);
+void euler3d_set_compute_zyx(Transform& t, bool compute_zyx);
+
+// Similarity2DTransform methods
+rust::Vec<double> similarity2d_get_center(const Transform& t);
+double            similarity2d_get_angle(const Transform& t);
+double            similarity2d_get_scale(const Transform& t);
+rust::Vec<double> similarity2d_get_translation(const Transform& t);
+rust::Vec<double> similarity2d_get_matrix(const Transform& t);
+void similarity2d_set_center(Transform& t, rust::Slice<const double> center);
+void similarity2d_set_angle(Transform& t, double angle);
+void similarity2d_set_scale(Transform& t, double scale);
+void similarity2d_set_translation(Transform& t, rust::Slice<const double> translation);
+void similarity2d_set_matrix(Transform& t, rust::Slice<const double> matrix);
+
+// Similarity3DTransform methods
+rust::Vec<double> similarity3d_get_center(const Transform& t);
+rust::Vec<double> similarity3d_get_versor(const Transform& t);
+double            similarity3d_get_scale(const Transform& t);
+rust::Vec<double> similarity3d_get_translation(const Transform& t);
+rust::Vec<double> similarity3d_get_matrix(const Transform& t);
+void similarity3d_set_center(Transform& t, rust::Slice<const double> center);
+void similarity3d_set_rotation_versor(Transform& t, rust::Slice<const double> versor);
+void similarity3d_set_rotation_axis_angle(Transform& t, rust::Slice<const double> axis, double angle);
+void similarity3d_set_scale(Transform& t, double scale);
+void similarity3d_set_translation(Transform& t, rust::Slice<const double> translation);
+void similarity3d_set_matrix(Transform& t, rust::Slice<const double> matrix);
+
+// VersorTransform methods
+rust::Vec<double> versor_get_center(const Transform& t);
+rust::Vec<double> versor_get_versor(const Transform& t);
+rust::Vec<double> versor_get_matrix(const Transform& t);
+void versor_set_center(Transform& t, rust::Slice<const double> center);
+void versor_set_rotation_versor(Transform& t, rust::Slice<const double> versor);
+void versor_set_rotation_axis_angle(Transform& t, rust::Slice<const double> axis, double angle);
+void versor_set_matrix(Transform& t, rust::Slice<const double> matrix);
+
+// VersorRigid3DTransform methods (same as Versor + translation)
+rust::Vec<double> versor_rigid3d_get_translation(const Transform& t);
+void versor_rigid3d_set_translation(Transform& t, rust::Slice<const double> translation);
+
+// ScaleVersor3DTransform methods
+rust::Vec<double> scale_versor3d_get_scale(const Transform& t);
+void scale_versor3d_set_scale(Transform& t, rust::Slice<const double> scale);
+
+// ScaleSkewVersor3DTransform methods
+rust::Vec<double> scale_skew_versor3d_get_skew(const Transform& t);
+void scale_skew_versor3d_set_skew(Transform& t, rust::Slice<const double> skew);
+
+// CompositeTransform methods
+void composite_add_transform(Transform& t, const Transform& to_add);
+uint32_t composite_get_number_of_transforms(const Transform& t);
+void composite_clear_transforms(Transform& t);
+void composite_flatten_transform(Transform& t);
+
+// DisplacementFieldTransform factory + methods
+std::unique_ptr<Transform> new_displacement_field_transform(uint32_t dimensions);
+std::unique_ptr<Image> displacement_field_get_displacement_field(const Transform& t);
+void displacement_field_set_displacement_field(Transform& t, const Image& field);
+void displacement_field_set_smoothing_off(Transform& t);
+void displacement_field_set_interpolator(Transform& t, int32_t interpolator);
+
+// Resample filter using a Transform
+std::unique_ptr<Image> filter_resample(const Image& img, const Transform& tx, int32_t interpolator, double default_pixel_value, int32_t output_pixel_type);
+std::unique_ptr<Image> filter_resample_to_ref(const Image& img, const Image& ref_img, const Transform& tx, int32_t interpolator, double default_pixel_value, int32_t output_pixel_type);
+std::unique_ptr<Image> filter_transform_to_displacement_field(const Transform& tx, int32_t output_pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> origin, rust::Slice<const double> spacing);
+
 } // namespace sitk_rs

@@ -1231,4 +1231,415 @@ std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& i
     return std::make_unique<Image>(itk::simple::NaryMaximum(std::vector<itk::simple::Image>{img1, img2}));
 }
 
+// ── Transforms ─────────────────────────────────────────────────────────────
+
+std::unique_ptr<Transform> new_affine_transform(uint32_t dimensions) {
+    return std::make_unique<Transform>(itk::simple::AffineTransform(dimensions));
+}
+std::unique_ptr<Transform> new_translation_transform(uint32_t dimensions) {
+    return std::make_unique<Transform>(itk::simple::TranslationTransform(dimensions));
+}
+std::unique_ptr<Transform> new_scale_transform(uint32_t dimensions) {
+    return std::make_unique<Transform>(itk::simple::ScaleTransform(dimensions));
+}
+std::unique_ptr<Transform> new_euler2d_transform() {
+    return std::make_unique<Transform>(itk::simple::Euler2DTransform());
+}
+std::unique_ptr<Transform> new_euler3d_transform() {
+    return std::make_unique<Transform>(itk::simple::Euler3DTransform());
+}
+std::unique_ptr<Transform> new_similarity2d_transform() {
+    return std::make_unique<Transform>(itk::simple::Similarity2DTransform());
+}
+std::unique_ptr<Transform> new_similarity3d_transform() {
+    return std::make_unique<Transform>(itk::simple::Similarity3DTransform());
+}
+std::unique_ptr<Transform> new_versor_transform() {
+    return std::make_unique<Transform>(itk::simple::VersorTransform());
+}
+std::unique_ptr<Transform> new_versor_rigid3d_transform() {
+    return std::make_unique<Transform>(itk::simple::VersorRigid3DTransform());
+}
+std::unique_ptr<Transform> new_scale_versor3d_transform() {
+    return std::make_unique<Transform>(itk::simple::ScaleVersor3DTransform());
+}
+std::unique_ptr<Transform> new_scale_skew_versor3d_transform() {
+    return std::make_unique<Transform>(itk::simple::ScaleSkewVersor3DTransform());
+}
+std::unique_ptr<Transform> new_composite_transform(uint32_t dimensions) {
+    return std::make_unique<Transform>(itk::simple::CompositeTransform(dimensions));
+}
+std::unique_ptr<Transform> read_transform(rust::Str path) {
+    return std::make_unique<Transform>(itk::simple::ReadTransform(std::string(path.data(), path.size())));
+}
+
+// Base methods
+rust::Vec<double> transform_get_parameters(const Transform& t) {
+    auto v = t.GetParameters();
+    rust::Vec<double> out;
+    for (auto x : v) out.push_back(x);
+    return out;
+}
+rust::Vec<double> transform_get_fixed_parameters(const Transform& t) {
+    auto v = t.GetFixedParameters();
+    rust::Vec<double> out;
+    for (auto x : v) out.push_back(x);
+    return out;
+}
+uint64_t transform_get_number_of_parameters(const Transform& t) { return t.GetNumberOfParameters(); }
+uint64_t transform_get_number_of_fixed_parameters(const Transform& t) { return t.GetNumberOfFixedParameters(); }
+rust::Vec<double> transform_transform_point(const Transform& t, rust::Slice<const double> point) {
+    std::vector<double> p(point.data(), point.data() + point.size());
+    auto r = t.TransformPoint(p);
+    rust::Vec<double> out;
+    for (auto x : r) out.push_back(x);
+    return out;
+}
+bool     transform_is_linear(const Transform& t) { return t.IsLinear(); }
+uint32_t transform_get_dimension(const Transform& t) { return t.GetDimension(); }
+rust::String transform_get_name(const Transform& t) { return rust::String(t.GetName()); }
+void transform_write(const Transform& t, rust::Str path) {
+    itk::simple::WriteTransform(t, std::string(path.data(), path.size()));
+}
+std::unique_ptr<Transform> transform_get_inverse(const Transform& t) {
+    Transform inv = t;
+    inv.SetInverse();
+    return std::make_unique<Transform>(inv);
+}
+void transform_set_parameters(Transform& t, rust::Slice<const double> params) {
+    t.SetParameters(std::vector<double>(params.data(), params.data() + params.size()));
+}
+void transform_set_fixed_parameters(Transform& t, rust::Slice<const double> params) {
+    t.SetFixedParameters(std::vector<double>(params.data(), params.data() + params.size()));
+}
+void transform_set_identity(Transform& t) { t.SetIdentity(); }
+
+// AffineTransform — params: [m00,m01,..., tx,ty,...], fixed: [cx,cy,...]
+rust::Vec<double> affine_get_matrix(const Transform& t) {
+    auto p = t.GetParameters();
+    uint32_t dim = t.GetDimension();
+    rust::Vec<double> out;
+    for (uint32_t i = 0; i < dim*dim && i < p.size(); ++i) out.push_back(p[i]);
+    return out;
+}
+rust::Vec<double> affine_get_center(const Transform& t) {
+    auto fp = t.GetFixedParameters();
+    rust::Vec<double> out;
+    for (auto x : fp) out.push_back(x);
+    return out;
+}
+rust::Vec<double> affine_get_translation(const Transform& t) {
+    auto p = t.GetParameters();
+    uint32_t dim = t.GetDimension();
+    rust::Vec<double> out;
+    for (size_t i = dim*dim; i < p.size(); ++i) out.push_back(p[i]);
+    return out;
+}
+void affine_set_matrix(Transform& t, rust::Slice<const double> matrix) {
+    auto p = t.GetParameters();
+    uint32_t dim = t.GetDimension();
+    for (uint32_t i = 0; i < dim*dim && i < matrix.size(); ++i) p[i] = matrix[i];
+    t.SetParameters(p);
+}
+void affine_set_center(Transform& t, rust::Slice<const double> center) {
+    t.SetFixedParameters(std::vector<double>(center.data(), center.data() + center.size()));
+}
+void affine_set_translation(Transform& t, rust::Slice<const double> translation) {
+    auto p = t.GetParameters();
+    uint32_t dim = t.GetDimension();
+    for (size_t i = 0; i < translation.size() && dim*dim+i < p.size(); ++i)
+        p[dim*dim + i] = translation[i];
+    t.SetParameters(p);
+}
+
+// TranslationTransform — params: [tx, ty, ...]
+rust::Vec<double> translation_get_offset(const Transform& t) {
+    auto p = t.GetParameters();
+    rust::Vec<double> out;
+    for (auto x : p) out.push_back(x);
+    return out;
+}
+void translation_set_offset(Transform& t, rust::Slice<const double> offset) {
+    t.SetParameters(std::vector<double>(offset.data(), offset.data() + offset.size()));
+}
+
+// ScaleTransform — params: [sx, sy, ...], fixed: [cx, cy, ...]
+rust::Vec<double> scale_get_scale(const Transform& t) {
+    auto p = t.GetParameters();
+    rust::Vec<double> out;
+    for (auto x : p) out.push_back(x);
+    return out;
+}
+rust::Vec<double> scale_get_center(const Transform& t) {
+    auto fp = t.GetFixedParameters();
+    rust::Vec<double> out;
+    for (auto x : fp) out.push_back(x);
+    return out;
+}
+void scale_set_scale(Transform& t, rust::Slice<const double> scale) {
+    t.SetParameters(std::vector<double>(scale.data(), scale.data() + scale.size()));
+}
+void scale_set_center(Transform& t, rust::Slice<const double> center) {
+    t.SetFixedParameters(std::vector<double>(center.data(), center.data() + center.size()));
+}
+
+// Euler2DTransform — params: [angle, tx, ty], fixed: [cx, cy]
+rust::Vec<double> euler2d_get_center(const Transform& t) {
+    auto fp = t.GetFixedParameters(); rust::Vec<double> out; for (auto x : fp) out.push_back(x); return out;
+}
+double euler2d_get_angle(const Transform& t) { return t.GetParameters()[0]; }
+rust::Vec<double> euler2d_get_translation(const Transform& t) {
+    auto p = t.GetParameters(); rust::Vec<double> out;
+    for (size_t i = 1; i < p.size(); ++i) out.push_back(p[i]); return out;
+}
+rust::Vec<double> euler2d_get_matrix(const Transform& t) {
+    double a = t.GetParameters()[0];
+    rust::Vec<double> out;
+    out.push_back(std::cos(a)); out.push_back(-std::sin(a));
+    out.push_back(std::sin(a)); out.push_back(std::cos(a));
+    return out;
+}
+void euler2d_set_center(Transform& t, rust::Slice<const double> center) {
+    t.SetFixedParameters(std::vector<double>(center.data(), center.data() + center.size()));
+}
+void euler2d_set_angle(Transform& t, double angle) {
+    auto p = t.GetParameters(); p[0] = angle; t.SetParameters(p);
+}
+void euler2d_set_translation(Transform& t, rust::Slice<const double> translation) {
+    auto p = t.GetParameters();
+    for (size_t i = 0; i < translation.size(); ++i) p[1+i] = translation[i];
+    t.SetParameters(p);
+}
+void euler2d_set_matrix(Transform& t, rust::Slice<const double> /*m*/) { (void)t; }
+
+// Euler3DTransform — params: [rx, ry, rz, tx, ty, tz], fixed: [cx, cy, cz, ...]
+rust::Vec<double> euler3d_get_center(const Transform& t) {
+    auto fp = t.GetFixedParameters(); rust::Vec<double> out; for (auto x : fp) out.push_back(x); return out;
+}
+double euler3d_get_angle_x(const Transform& t) { return t.GetParameters()[0]; }
+double euler3d_get_angle_y(const Transform& t) { return t.GetParameters()[1]; }
+double euler3d_get_angle_z(const Transform& t) { return t.GetParameters()[2]; }
+rust::Vec<double> euler3d_get_translation(const Transform& t) {
+    auto p = t.GetParameters(); rust::Vec<double> out;
+    for (size_t i = 3; i < p.size(); ++i) out.push_back(p[i]); return out;
+}
+rust::Vec<double> euler3d_get_matrix(const Transform& t) {
+    auto p = t.GetParameters(); rust::Vec<double> out;
+    for (size_t i = 0; i < 9 && i < p.size(); ++i) out.push_back(p[i]); return out;
+}
+void euler3d_set_center(Transform& t, rust::Slice<const double> center) {
+    t.SetFixedParameters(std::vector<double>(center.data(), center.data() + center.size()));
+}
+void euler3d_set_rotation(Transform& t, double ax, double ay, double az) {
+    auto p = t.GetParameters(); p[0]=ax; p[1]=ay; p[2]=az; t.SetParameters(p);
+}
+void euler3d_set_translation(Transform& t, rust::Slice<const double> translation) {
+    auto p = t.GetParameters();
+    for (size_t i = 0; i < translation.size(); ++i) p[3+i] = translation[i];
+    t.SetParameters(p);
+}
+void euler3d_set_matrix(Transform& t, rust::Slice<const double> /*m*/) { (void)t; }
+void euler3d_set_compute_zyx(Transform& t, bool zyx) {
+    auto fp = t.GetFixedParameters();
+    if (fp.size() >= 4) fp[3] = zyx ? 1.0 : 0.0;
+    t.SetFixedParameters(fp);
+}
+
+// Similarity2DTransform — params: [scale, angle, tx, ty], fixed: [cx, cy]
+rust::Vec<double> similarity2d_get_center(const Transform& t) {
+    auto fp=t.GetFixedParameters(); rust::Vec<double> out; for(auto x:fp) out.push_back(x); return out;
+}
+double similarity2d_get_angle(const Transform& t) { return t.GetParameters()[1]; }
+double similarity2d_get_scale(const Transform& t) { return t.GetParameters()[0]; }
+rust::Vec<double> similarity2d_get_translation(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=2;i<p.size();++i) out.push_back(p[i]); return out;
+}
+rust::Vec<double> similarity2d_get_matrix(const Transform& t) {
+    double s=t.GetParameters()[0], a=t.GetParameters()[1];
+    rust::Vec<double> out;
+    out.push_back(s*std::cos(a)); out.push_back(-s*std::sin(a));
+    out.push_back(s*std::sin(a)); out.push_back(s*std::cos(a));
+    return out;
+}
+void similarity2d_set_center(Transform& t, rust::Slice<const double> c) {
+    t.SetFixedParameters(std::vector<double>(c.data(),c.data()+c.size()));
+}
+void similarity2d_set_angle(Transform& t, double a) { auto p=t.GetParameters(); p[1]=a; t.SetParameters(p); }
+void similarity2d_set_scale(Transform& t, double s) { auto p=t.GetParameters(); p[0]=s; t.SetParameters(p); }
+void similarity2d_set_translation(Transform& t, rust::Slice<const double> tr) {
+    auto p=t.GetParameters(); for(size_t i=0;i<tr.size();++i) p[2+i]=tr[i]; t.SetParameters(p);
+}
+void similarity2d_set_matrix(Transform& t, rust::Slice<const double> /*m*/) { (void)t; }
+
+// Similarity3DTransform — params: [vx,vy,vz, tx,ty,tz, scale], fixed: [cx,cy,cz]
+rust::Vec<double> similarity3d_get_center(const Transform& t) {
+    auto fp=t.GetFixedParameters(); rust::Vec<double> out; for(auto x:fp) out.push_back(x); return out;
+}
+rust::Vec<double> similarity3d_get_versor(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=0;i<3&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+double similarity3d_get_scale(const Transform& t) {
+    auto p=t.GetParameters(); return p.size()>=7?p[6]:1.0;
+}
+rust::Vec<double> similarity3d_get_translation(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=3;i<6&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+rust::Vec<double> similarity3d_get_matrix(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=0;i<9&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+void similarity3d_set_center(Transform& t, rust::Slice<const double> c) {
+    t.SetFixedParameters(std::vector<double>(c.data(),c.data()+c.size()));
+}
+void similarity3d_set_rotation_versor(Transform& t, rust::Slice<const double> v) {
+    auto p=t.GetParameters(); for(size_t i=0;i<3&&i<v.size();++i) p[i]=v[i]; t.SetParameters(p);
+}
+void similarity3d_set_rotation_axis_angle(Transform& t, rust::Slice<const double> axis, double angle) {
+    double s=std::sin(angle/2);
+    auto p=t.GetParameters(); p[0]=axis[0]*s; p[1]=axis[1]*s; p[2]=axis[2]*s; t.SetParameters(p);
+}
+void similarity3d_set_scale(Transform& t, double s) {
+    auto p=t.GetParameters(); if(p.size()>=7) p[6]=s; t.SetParameters(p);
+}
+void similarity3d_set_translation(Transform& t, rust::Slice<const double> tr) {
+    auto p=t.GetParameters(); for(size_t i=0;i<3&&i<tr.size();++i) p[3+i]=tr[i]; t.SetParameters(p);
+}
+void similarity3d_set_matrix(Transform& t, rust::Slice<const double> /*m*/) { (void)t; }
+
+// VersorTransform — params: [vx,vy,vz], fixed: [cx,cy,cz]
+rust::Vec<double> versor_get_center(const Transform& t) {
+    auto fp=t.GetFixedParameters(); rust::Vec<double> out; for(auto x:fp) out.push_back(x); return out;
+}
+rust::Vec<double> versor_get_versor(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=0;i<3&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+rust::Vec<double> versor_get_matrix(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=0;i<9&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+void versor_set_center(Transform& t, rust::Slice<const double> c) {
+    t.SetFixedParameters(std::vector<double>(c.data(),c.data()+c.size()));
+}
+void versor_set_rotation_versor(Transform& t, rust::Slice<const double> v) {
+    auto p=t.GetParameters(); for(size_t i=0;i<3&&i<v.size();++i) p[i]=v[i]; t.SetParameters(p);
+}
+void versor_set_rotation_axis_angle(Transform& t, rust::Slice<const double> axis, double angle) {
+    double s=std::sin(angle/2);
+    auto p=t.GetParameters(); p[0]=axis[0]*s; p[1]=axis[1]*s; p[2]=axis[2]*s; t.SetParameters(p);
+}
+void versor_set_matrix(Transform& t, rust::Slice<const double> /*m*/) { (void)t; }
+
+// VersorRigid3DTransform — params: [vx,vy,vz, tx,ty,tz], fixed: [cx,cy,cz]
+rust::Vec<double> versor_rigid3d_get_translation(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=3;i<6&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+void versor_rigid3d_set_translation(Transform& t, rust::Slice<const double> tr) {
+    auto p=t.GetParameters(); for(size_t i=0;i<3&&i<tr.size();++i) p[3+i]=tr[i]; t.SetParameters(p);
+}
+
+// ScaleVersor3DTransform — params: [vx,vy,vz, tx,ty,tz, sx,sy,sz]
+rust::Vec<double> scale_versor3d_get_scale(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=6;i<9&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+void scale_versor3d_set_scale(Transform& t, rust::Slice<const double> s) {
+    auto p=t.GetParameters(); for(size_t i=0;i<3&&i<s.size();++i) p[6+i]=s[i]; t.SetParameters(p);
+}
+
+// ScaleSkewVersor3DTransform — params: [vx,vy,vz, tx,ty,tz, sx,sy,sz, skew[0..5]]
+rust::Vec<double> scale_skew_versor3d_get_skew(const Transform& t) {
+    auto p=t.GetParameters(); rust::Vec<double> out;
+    for(size_t i=9;i<15&&i<p.size();++i) out.push_back(p[i]); return out;
+}
+void scale_skew_versor3d_set_skew(Transform& t, rust::Slice<const double> sk) {
+    auto p=t.GetParameters(); for(size_t i=0;i<6&&i<sk.size();++i) p[9+i]=sk[i]; t.SetParameters(p);
+}
+
+// CompositeTransform
+void composite_add_transform(Transform& t, const Transform& to_add) {
+    itk::simple::CompositeTransform ct(t);
+    ct.AddTransform(const_cast<Transform&>(to_add));
+    t = ct;
+}
+uint32_t composite_get_number_of_transforms(const Transform& t) {
+    itk::simple::CompositeTransform ct(t);
+    return static_cast<uint32_t>(ct.GetNumberOfTransforms());
+}
+void composite_clear_transforms(Transform& t) {
+    itk::simple::CompositeTransform ct(t);
+    ct.ClearTransforms();
+    t = ct;
+}
+void composite_flatten_transform(Transform& t) {
+    itk::simple::CompositeTransform ct(t);
+    ct.FlattenTransform();
+    t = ct;
+}
+
+// DisplacementFieldTransform
+std::unique_ptr<Transform> new_displacement_field_transform(uint32_t dimensions) {
+    return std::make_unique<Transform>(itk::simple::DisplacementFieldTransform(dimensions));
+}
+std::unique_ptr<Image> displacement_field_get_displacement_field(const Transform& t) {
+    itk::simple::DisplacementFieldTransform df(t);
+    return std::make_unique<Image>(df.GetDisplacementField());
+}
+void displacement_field_set_displacement_field(Transform& t, const Image& field) {
+    itk::simple::DisplacementFieldTransform df(t);
+    df.SetDisplacementField(const_cast<Image&>(field));
+    t = df;
+}
+void displacement_field_set_smoothing_off(Transform& t) {
+    itk::simple::DisplacementFieldTransform df(t);
+    df.SetSmoothingOff();
+    t = df;
+}
+void displacement_field_set_interpolator(Transform& t, int32_t interp) {
+    itk::simple::DisplacementFieldTransform df(t);
+    df.SetInterpolator(static_cast<itk::simple::InterpolatorEnum>(interp));
+    t = df;
+}
+
+// Resample
+std::unique_ptr<Image> filter_resample(const Image& img, const Transform& tx,
+    int32_t interpolator, double default_pixel_value, int32_t output_pixel_type)
+{
+    itk::simple::ResampleImageFilter f;
+    f.SetTransform(tx);
+    f.SetInterpolator(static_cast<itk::simple::InterpolatorEnum>(interpolator));
+    f.SetDefaultPixelValue(default_pixel_value);
+    f.SetOutputPixelType(static_cast<itk::simple::PixelIDValueEnum>(output_pixel_type));
+    return std::make_unique<Image>(f.Execute(img));
+}
+std::unique_ptr<Image> filter_resample_to_ref(const Image& img, const Image& ref_img,
+    const Transform& tx, int32_t interpolator, double default_pixel_value, int32_t output_pixel_type)
+{
+    itk::simple::ResampleImageFilter f;
+    f.SetSize(ref_img.GetSize());
+    f.SetOutputOrigin(ref_img.GetOrigin());
+    f.SetOutputSpacing(ref_img.GetSpacing());
+    f.SetOutputDirection(ref_img.GetDirection());
+    f.SetTransform(tx);
+    f.SetInterpolator(static_cast<itk::simple::InterpolatorEnum>(interpolator));
+    f.SetDefaultPixelValue(default_pixel_value);
+    f.SetOutputPixelType(static_cast<itk::simple::PixelIDValueEnum>(output_pixel_type));
+    return std::make_unique<Image>(f.Execute(img));
+}
+std::unique_ptr<Image> filter_transform_to_displacement_field(const Transform& tx,
+    int32_t output_pixel_type, rust::Slice<const uint32_t> size,
+    rust::Slice<const double> origin, rust::Slice<const double> spacing)
+{
+    itk::simple::TransformToDisplacementFieldFilter f;
+    f.SetOutputPixelType(static_cast<itk::simple::PixelIDValueEnum>(output_pixel_type));
+    f.SetSize(std::vector<unsigned int>(size.data(), size.data()+size.size()));
+    f.SetOutputOrigin(std::vector<double>(origin.data(), origin.data()+origin.size()));
+    f.SetOutputSpacing(std::vector<double>(spacing.data(), spacing.data()+spacing.size()));
+    return std::make_unique<Image>(f.Execute(tx));
+}
+
 } // namespace sitk_rs
