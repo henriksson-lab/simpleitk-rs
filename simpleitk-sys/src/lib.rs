@@ -261,5 +261,53 @@ pub mod ffi {
 
         // NeighborhoodConnected
         fn filter_neighborhood_connected(img: &Image, lower: f64, upper: f64, radius: &[u32], replace_value: f64) -> Result<UniquePtr<Image>>;
+
+        // ── Group 1: Binary image+image ──────────────────────────────────
+        fn filter_maximum(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_minimum(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_modulus(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
+
+        // ── Group 2: Unary with simple scalar/bool params ────────────────
+        fn filter_laplacian(img: &Image, use_image_spacing: bool) -> Result<UniquePtr<Image>>;
+        fn filter_bspline_decomposition(img: &Image, spline_order: u32) -> Result<UniquePtr<Image>>;
+        fn filter_relabel_label_map(img: &Image, reverse_ordering: bool) -> Result<UniquePtr<Image>>;
+        fn filter_label_unique_label_map(img: &Image, reverse_ordering: bool) -> Result<UniquePtr<Image>>;
+        fn filter_label_to_rgb(img: &Image, background_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_label_voting(img: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_binary_image_to_label_map(img: &Image, fully_connected: bool, input_foreground_value: f64, output_background_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_label_image_to_label_map(img: &Image, background_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_min_max_curvature_flow(img: &Image, time_step: f64, number_of_iterations: u32, stencil_radius: i32) -> Result<UniquePtr<Image>>;
+        fn filter_fast_marching(img: &Image, normalization_factor: f64, stopping_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_connected_threshold(img: &Image, lower: f64, upper: f64, replace_value: u8, connectivity: i32) -> Result<UniquePtr<Image>>;
+
+        // ── Group 3: Unary with vector params ────────────────────────────
+        fn filter_crop(img: &Image, lower_size: &[u32], upper_size: &[u32]) -> Result<UniquePtr<Image>>;
+        fn filter_tile(img: &Image, layout: &[u32], default_pixel_value: f64) -> Result<UniquePtr<Image>>;
+        fn filter_compose(img: &Image) -> Result<UniquePtr<Image>>;
+
+        // ── Group 4: Two-image with params ───────────────────────────────
+        fn filter_masked_assign(img: &Image, mask: &Image, assign_constant: f64) -> Result<UniquePtr<Image>>;
+        fn filter_label_map_overlay(label_map: &Image, feature_image: &Image, opacity: f64) -> Result<UniquePtr<Image>>;
+        fn filter_label_map_mask(label_map: &Image, feature_image: &Image, label: u64, background_value: f64, negated: bool, crop: bool) -> Result<UniquePtr<Image>>;
+        fn filter_join_series_two(img1: &Image, img2: &Image, origin: f64, spacing: f64) -> Result<UniquePtr<Image>>;
+        fn filter_isolated_connected(img: &Image, seed1: &[u32], seed2: &[u32], lower: f64, upper: f64, replace_value: u8, tolerance: f64, find_upper: bool) -> Result<UniquePtr<Image>>;
+        fn filter_isolated_watershed(img: &Image, seed1: &[u32], seed2: &[u32], threshold: f64, upper_value_limit: f64, tolerance: f64, replace1: u8, replace2: u8) -> Result<UniquePtr<Image>>;
+
+        // ── Group 5: Three-image ─────────────────────────────────────────
+        fn filter_normalized_correlation(image: &Image, mask_image: &Image, template_image: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_label_map_contour_overlay(label_map: &Image, feature_image: &Image, opacity: f64, dilation_radius: &[u32], contour_thickness: &[u32], slice_dimension: u32, contour_type: i32, priority: i32) -> Result<UniquePtr<Image>>;
+        fn filter_merge_label_map_two(img1: &Image, img2: &Image, method: i32) -> Result<UniquePtr<Image>>;
+
+        // ── Group 6: Image sources (no Image input) ──────────────────────
+        fn source_gaussian(pixel_type: i32, size: &[u32], sigma: &[f64], mean: &[f64], scale: f64) -> Result<UniquePtr<Image>>;
+        fn source_gabor(pixel_type: i32, size: &[u32], sigma: &[f64], mean: &[f64], frequency: f64) -> Result<UniquePtr<Image>>;
+        fn source_grid(pixel_type: i32, size: &[u32], sigma: &[f64], grid_spacing: &[f64], grid_offset: &[f64], scale: f64) -> Result<UniquePtr<Image>>;
+        fn source_physical_point(pixel_type: i32, size: &[u32]) -> Result<UniquePtr<Image>>;
+        // ── Final batch ──────────────────────────────────────────────────
+        fn filter_aggregate_label_map(img: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_label_map_to_rgb(img: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_extract(img: &Image, size: &[u32], index: &[i32]) -> Result<UniquePtr<Image>>;
+        fn filter_nary_add_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
+        fn filter_nary_maximum_two(img1: &Image, img2: &Image) -> Result<UniquePtr<Image>>;
     }
 }

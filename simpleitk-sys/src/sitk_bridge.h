@@ -261,4 +261,53 @@ std::unique_ptr<Image> filter_masked_fft_normalized_correlation(const Image& fix
 // NeighborhoodConnected (class API, no seeds)
 std::unique_ptr<Image> filter_neighborhood_connected(const Image& img, double lower, double upper, rust::Slice<const uint32_t> radius, double replace_value);
 
+// ── Group 1: Binary image+image ────────────────────────────────────────────
+std::unique_ptr<Image> filter_maximum(const Image& img1, const Image& img2);
+std::unique_ptr<Image> filter_minimum(const Image& img1, const Image& img2);
+std::unique_ptr<Image> filter_modulus(const Image& img1, const Image& img2);
+
+// ── Group 2: Unary with simple scalar/bool params ──────────────────────────
+std::unique_ptr<Image> filter_laplacian(const Image& img, bool use_image_spacing);
+std::unique_ptr<Image> filter_bspline_decomposition(const Image& img, uint32_t spline_order);
+std::unique_ptr<Image> filter_relabel_label_map(const Image& img, bool reverse_ordering);
+std::unique_ptr<Image> filter_label_unique_label_map(const Image& img, bool reverse_ordering);
+std::unique_ptr<Image> filter_label_to_rgb(const Image& img, double background_value);
+std::unique_ptr<Image> filter_label_voting(const Image& img);
+std::unique_ptr<Image> filter_binary_image_to_label_map(const Image& img, bool fully_connected, double input_foreground_value, double output_background_value);
+std::unique_ptr<Image> filter_label_image_to_label_map(const Image& img, double background_value);
+std::unique_ptr<Image> filter_min_max_curvature_flow(const Image& img, double time_step, uint32_t number_of_iterations, int32_t stencil_radius);
+std::unique_ptr<Image> filter_fast_marching(const Image& img, double normalization_factor, double stopping_value);
+std::unique_ptr<Image> filter_connected_threshold(const Image& img, double lower, double upper, uint8_t replace_value, int32_t connectivity);
+
+// ── Group 3: Unary with vector params ──────────────────────────────────────
+std::unique_ptr<Image> filter_crop(const Image& img, rust::Slice<const uint32_t> lower_size, rust::Slice<const uint32_t> upper_size);
+std::unique_ptr<Image> filter_tile(const Image& img, rust::Slice<const uint32_t> layout, double default_pixel_value);
+std::unique_ptr<Image> filter_compose(const Image& img);
+
+// ── Group 4: Two-image with params ─────────────────────────────────────────
+std::unique_ptr<Image> filter_masked_assign(const Image& img, const Image& mask, double assign_constant);
+std::unique_ptr<Image> filter_label_map_overlay(const Image& label_map, const Image& feature_image, double opacity);
+std::unique_ptr<Image> filter_label_map_mask(const Image& label_map, const Image& feature_image, uint64_t label, double background_value, bool negated, bool crop);
+std::unique_ptr<Image> filter_join_series_two(const Image& img1, const Image& img2, double origin, double spacing);
+std::unique_ptr<Image> filter_isolated_connected(const Image& img, rust::Slice<const uint32_t> seed1, rust::Slice<const uint32_t> seed2, double lower, double upper, uint8_t replace_value, double tolerance, bool find_upper);
+std::unique_ptr<Image> filter_isolated_watershed(const Image& img, rust::Slice<const uint32_t> seed1, rust::Slice<const uint32_t> seed2, double threshold, double upper_value_limit, double tolerance, uint8_t replace1, uint8_t replace2);
+
+// ── Group 5: Three-image ───────────────────────────────────────────────────
+std::unique_ptr<Image> filter_normalized_correlation(const Image& image, const Image& mask_image, const Image& template_image);
+std::unique_ptr<Image> filter_label_map_contour_overlay(const Image& label_map, const Image& feature_image, double opacity, rust::Slice<const uint32_t> dilation_radius, rust::Slice<const uint32_t> contour_thickness, uint32_t slice_dimension, int32_t contour_type, int32_t priority);
+std::unique_ptr<Image> filter_merge_label_map_two(const Image& img1, const Image& img2, int32_t method);
+
+// ── Group 6: Image sources (no Image input) ────────────────────────────────
+std::unique_ptr<Image> source_gaussian(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> mean, double scale);
+std::unique_ptr<Image> source_gabor(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> mean, double frequency);
+std::unique_ptr<Image> source_grid(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> grid_spacing, rust::Slice<const double> grid_offset, double scale);
+std::unique_ptr<Image> source_physical_point(int32_t pixel_type, rust::Slice<const uint32_t> size);
+
+// ── Final batch ────────────────────────────────────────────────────────────
+std::unique_ptr<Image> filter_aggregate_label_map(const Image& img);
+std::unique_ptr<Image> filter_label_map_to_rgb(const Image& img);
+std::unique_ptr<Image> filter_extract(const Image& img, rust::Slice<const uint32_t> size, rust::Slice<const int32_t> index);
+std::unique_ptr<Image> filter_nary_add_two(const Image& img1, const Image& img2);
+std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& img2);
+
 } // namespace sitk_rs

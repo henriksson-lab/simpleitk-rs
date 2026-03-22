@@ -952,3 +952,155 @@ pub fn masked_fft_normalized_correlation(fixed_image: &Image, moving_image: &Ima
 pub fn neighborhood_connected(image: &Image, lower: f64, upper: f64, radius: &[u32], replace_value: f64) -> Result<Image, String> {
     wrap(ffi::filter_neighborhood_connected(&image.inner, lower, upper, radius, replace_value))
 }
+
+// ── Group 1: Binary image+image ────────────────────────────────────────────
+
+pub fn maximum(img1: &Image, img2: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_maximum(&img1.inner, &img2.inner))
+}
+
+pub fn minimum(img1: &Image, img2: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_minimum(&img1.inner, &img2.inner))
+}
+
+pub fn modulus(img1: &Image, img2: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_modulus(&img1.inner, &img2.inner))
+}
+
+// ── Group 2: Unary with simple scalar/bool params ──────────────────────────
+
+pub fn laplacian(image: &Image, use_image_spacing: bool) -> Result<Image, String> {
+    wrap(ffi::filter_laplacian(&image.inner, use_image_spacing))
+}
+
+pub fn bspline_decomposition(image: &Image, spline_order: u32) -> Result<Image, String> {
+    wrap(ffi::filter_bspline_decomposition(&image.inner, spline_order))
+}
+
+pub fn relabel_label_map(image: &Image, reverse_ordering: bool) -> Result<Image, String> {
+    wrap(ffi::filter_relabel_label_map(&image.inner, reverse_ordering))
+}
+
+pub fn label_unique_label_map(image: &Image, reverse_ordering: bool) -> Result<Image, String> {
+    wrap(ffi::filter_label_unique_label_map(&image.inner, reverse_ordering))
+}
+
+pub fn label_to_rgb(image: &Image, background_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_label_to_rgb(&image.inner, background_value))
+}
+
+pub fn label_voting(image: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_label_voting(&image.inner))
+}
+
+pub fn binary_image_to_label_map(image: &Image, fully_connected: bool, input_foreground_value: f64, output_background_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_binary_image_to_label_map(&image.inner, fully_connected, input_foreground_value, output_background_value))
+}
+
+pub fn label_image_to_label_map(image: &Image, background_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_label_image_to_label_map(&image.inner, background_value))
+}
+
+pub fn min_max_curvature_flow(image: &Image, time_step: f64, number_of_iterations: u32, stencil_radius: i32) -> Result<Image, String> {
+    wrap(ffi::filter_min_max_curvature_flow(&image.inner, time_step, number_of_iterations, stencil_radius))
+}
+
+pub fn fast_marching(image: &Image, normalization_factor: f64, stopping_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_fast_marching(&image.inner, normalization_factor, stopping_value))
+}
+
+pub fn connected_threshold(image: &Image, lower: f64, upper: f64, replace_value: u8, connectivity: i32) -> Result<Image, String> {
+    wrap(ffi::filter_connected_threshold(&image.inner, lower, upper, replace_value, connectivity))
+}
+
+// ── Group 3: Unary with vector params ──────────────────────────────────────
+
+pub fn crop(image: &Image, lower_size: &[u32], upper_size: &[u32]) -> Result<Image, String> {
+    wrap(ffi::filter_crop(&image.inner, lower_size, upper_size))
+}
+
+pub fn tile(image: &Image, layout: &[u32], default_pixel_value: f64) -> Result<Image, String> {
+    wrap(ffi::filter_tile(&image.inner, layout, default_pixel_value))
+}
+
+pub fn compose(image: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_compose(&image.inner))
+}
+
+// ── Group 4: Two-image with params ─────────────────────────────────────────
+
+pub fn masked_assign(image: &Image, mask: &Image, assign_constant: f64) -> Result<Image, String> {
+    wrap(ffi::filter_masked_assign(&image.inner, &mask.inner, assign_constant))
+}
+
+pub fn label_map_overlay(label_map: &Image, feature_image: &Image, opacity: f64) -> Result<Image, String> {
+    wrap(ffi::filter_label_map_overlay(&label_map.inner, &feature_image.inner, opacity))
+}
+
+pub fn label_map_mask(label_map: &Image, feature_image: &Image, label: u64, background_value: f64, negated: bool, crop: bool) -> Result<Image, String> {
+    wrap(ffi::filter_label_map_mask(&label_map.inner, &feature_image.inner, label, background_value, negated, crop))
+}
+
+pub fn join_series_two(img1: &Image, img2: &Image, origin: f64, spacing: f64) -> Result<Image, String> {
+    wrap(ffi::filter_join_series_two(&img1.inner, &img2.inner, origin, spacing))
+}
+
+pub fn isolated_connected(image: &Image, seed1: &[u32], seed2: &[u32], lower: f64, upper: f64, replace_value: u8, tolerance: f64, find_upper: bool) -> Result<Image, String> {
+    wrap(ffi::filter_isolated_connected(&image.inner, seed1, seed2, lower, upper, replace_value, tolerance, find_upper))
+}
+
+pub fn isolated_watershed(image: &Image, seed1: &[u32], seed2: &[u32], threshold: f64, upper_value_limit: f64, tolerance: f64, replace1: u8, replace2: u8) -> Result<Image, String> {
+    wrap(ffi::filter_isolated_watershed(&image.inner, seed1, seed2, threshold, upper_value_limit, tolerance, replace1, replace2))
+}
+
+// ── Group 5: Three-image ───────────────────────────────────────────────────
+
+pub fn normalized_correlation(image: &Image, mask_image: &Image, template_image: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_normalized_correlation(&image.inner, &mask_image.inner, &template_image.inner))
+}
+
+pub fn label_map_contour_overlay(label_map: &Image, feature_image: &Image, opacity: f64, dilation_radius: &[u32], contour_thickness: &[u32], slice_dimension: u32, contour_type: i32, priority: i32) -> Result<Image, String> {
+    wrap(ffi::filter_label_map_contour_overlay(&label_map.inner, &feature_image.inner, opacity, dilation_radius, contour_thickness, slice_dimension, contour_type, priority))
+}
+
+pub fn merge_label_map_two(img1: &Image, img2: &Image, method: i32) -> Result<Image, String> {
+    wrap(ffi::filter_merge_label_map_two(&img1.inner, &img2.inner, method))
+}
+
+// ── Group 6: Image sources (no Image input) ────────────────────────────────
+
+pub fn source_gaussian(pixel_type: i32, size: &[u32], sigma: &[f64], mean: &[f64], scale: f64) -> Result<Image, String> {
+    wrap(ffi::source_gaussian(pixel_type, size, sigma, mean, scale))
+}
+
+pub fn source_gabor(pixel_type: i32, size: &[u32], sigma: &[f64], mean: &[f64], frequency: f64) -> Result<Image, String> {
+    wrap(ffi::source_gabor(pixel_type, size, sigma, mean, frequency))
+}
+
+pub fn source_grid(pixel_type: i32, size: &[u32], sigma: &[f64], grid_spacing: &[f64], grid_offset: &[f64], scale: f64) -> Result<Image, String> {
+    wrap(ffi::source_grid(pixel_type, size, sigma, grid_spacing, grid_offset, scale))
+}
+
+pub fn source_physical_point(pixel_type: i32, size: &[u32]) -> Result<Image, String> {
+    wrap(ffi::source_physical_point(pixel_type, size))
+}
+
+pub fn aggregate_label_map(image: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_aggregate_label_map(&image.inner))
+}
+
+pub fn label_map_to_rgb(image: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_label_map_to_rgb(&image.inner))
+}
+
+pub fn extract(image: &Image, size: &[u32], index: &[i32]) -> Result<Image, String> {
+    wrap(ffi::filter_extract(&image.inner, size, index))
+}
+
+pub fn nary_add_two(img1: &Image, img2: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_nary_add_two(&img1.inner, &img2.inner))
+}
+
+pub fn nary_maximum_two(img1: &Image, img2: &Image) -> Result<Image, String> {
+    wrap(ffi::filter_nary_maximum_two(&img1.inner, &img2.inner))
+}

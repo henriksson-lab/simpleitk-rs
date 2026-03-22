@@ -1034,4 +1034,201 @@ std::unique_ptr<Image> filter_neighborhood_connected(const Image& img, double lo
     return std::make_unique<Image>(f.Execute(img));
 }
 
+// ── Group 1: Binary image+image ────────────────────────────────────────────
+
+std::unique_ptr<Image> filter_maximum(const Image& img1, const Image& img2) {
+    return std::make_unique<Image>(itk::simple::Maximum(img1, img2));
+}
+
+std::unique_ptr<Image> filter_minimum(const Image& img1, const Image& img2) {
+    return std::make_unique<Image>(itk::simple::Minimum(img1, img2));
+}
+
+std::unique_ptr<Image> filter_modulus(const Image& img1, const Image& img2) {
+    return std::make_unique<Image>(itk::simple::Modulus(img1, img2));
+}
+
+// ── Group 2: Unary with simple scalar/bool params ──────────────────────────
+
+std::unique_ptr<Image> filter_laplacian(const Image& img, bool use_image_spacing) {
+    return std::make_unique<Image>(itk::simple::Laplacian(img, use_image_spacing));
+}
+
+std::unique_ptr<Image> filter_bspline_decomposition(const Image& img, uint32_t spline_order) {
+    return std::make_unique<Image>(itk::simple::BSplineDecomposition(img, spline_order));
+}
+
+std::unique_ptr<Image> filter_relabel_label_map(const Image& img, bool reverse_ordering) {
+    return std::make_unique<Image>(itk::simple::RelabelLabelMap(img, reverse_ordering));
+}
+
+std::unique_ptr<Image> filter_label_unique_label_map(const Image& img, bool reverse_ordering) {
+    return std::make_unique<Image>(itk::simple::LabelUniqueLabelMap(img, reverse_ordering));
+}
+
+std::unique_ptr<Image> filter_label_to_rgb(const Image& img, double background_value) {
+    return std::make_unique<Image>(itk::simple::LabelToRGB(img, background_value, std::vector<uint8_t>()));
+}
+
+std::unique_ptr<Image> filter_label_voting(const Image& img) {
+    return std::make_unique<Image>(itk::simple::LabelVoting(img, std::numeric_limits<uint64_t>::max()));
+}
+
+std::unique_ptr<Image> filter_binary_image_to_label_map(const Image& img, bool fully_connected, double input_foreground_value, double output_background_value) {
+    return std::make_unique<Image>(itk::simple::BinaryImageToLabelMap(img, fully_connected, input_foreground_value, output_background_value));
+}
+
+std::unique_ptr<Image> filter_label_image_to_label_map(const Image& img, double background_value) {
+    return std::make_unique<Image>(itk::simple::LabelImageToLabelMap(img, background_value));
+}
+
+std::unique_ptr<Image> filter_min_max_curvature_flow(const Image& img, double time_step, uint32_t number_of_iterations, int32_t stencil_radius) {
+    return std::make_unique<Image>(itk::simple::MinMaxCurvatureFlow(img, time_step, number_of_iterations, stencil_radius));
+}
+
+std::unique_ptr<Image> filter_fast_marching(const Image& img, double normalization_factor, double stopping_value) {
+    auto f = itk::simple::FastMarchingImageFilter();
+    f.SetNormalizationFactor(normalization_factor);
+    f.SetStoppingValue(stopping_value);
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_connected_threshold(const Image& img, double lower, double upper, uint8_t replace_value, int32_t connectivity) {
+    auto f = itk::simple::ConnectedThresholdImageFilter();
+    f.SetLower(lower);
+    f.SetUpper(upper);
+    f.SetReplaceValue(replace_value);
+    f.SetConnectivity(static_cast<itk::simple::ConnectedThresholdImageFilter::ConnectivityType>(connectivity));
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+// ── Group 3: Unary with vector params ──────────────────────────────────────
+
+std::unique_ptr<Image> filter_crop(const Image& img, rust::Slice<const uint32_t> lower_size, rust::Slice<const uint32_t> upper_size) {
+    std::vector<unsigned int> lo(lower_size.begin(), lower_size.end());
+    std::vector<unsigned int> hi(upper_size.begin(), upper_size.end());
+    return std::make_unique<Image>(itk::simple::Crop(img, lo, hi));
+}
+
+std::unique_ptr<Image> filter_tile(const Image& img, rust::Slice<const uint32_t> layout, double default_pixel_value) {
+    std::vector<unsigned int> lay(layout.begin(), layout.end());
+    return std::make_unique<Image>(itk::simple::Tile(img, lay, default_pixel_value));
+}
+
+std::unique_ptr<Image> filter_compose(const Image& img) {
+    return std::make_unique<Image>(itk::simple::Compose(img));
+}
+
+// ── Group 4: Two-image with params ─────────────────────────────────────────
+
+std::unique_ptr<Image> filter_masked_assign(const Image& img, const Image& mask, double assign_constant) {
+    return std::make_unique<Image>(itk::simple::MaskedAssign(img, mask, assign_constant));
+}
+
+std::unique_ptr<Image> filter_label_map_overlay(const Image& label_map, const Image& feature_image, double opacity) {
+    return std::make_unique<Image>(itk::simple::LabelMapOverlay(label_map, feature_image, opacity, std::vector<uint8_t>()));
+}
+
+std::unique_ptr<Image> filter_label_map_mask(const Image& label_map, const Image& feature_image, uint64_t label, double background_value, bool negated, bool crop) {
+    return std::make_unique<Image>(itk::simple::LabelMapMask(label_map, feature_image, label, background_value, negated, crop, std::vector<uint32_t>()));
+}
+
+std::unique_ptr<Image> filter_join_series_two(const Image& img1, const Image& img2, double origin, double spacing) {
+    std::vector<itk::simple::Image> images = {img1, img2};
+    return std::make_unique<Image>(itk::simple::JoinSeries(images, origin, spacing));
+}
+
+std::unique_ptr<Image> filter_isolated_connected(const Image& img, rust::Slice<const uint32_t> seed1, rust::Slice<const uint32_t> seed2, double lower, double upper, uint8_t replace_value, double tolerance, bool find_upper) {
+    std::vector<unsigned int> s1(seed1.begin(), seed1.end());
+    std::vector<unsigned int> s2(seed2.begin(), seed2.end());
+    return std::make_unique<Image>(itk::simple::IsolatedConnected(img, s1, s2, lower, upper, replace_value, tolerance, find_upper));
+}
+
+std::unique_ptr<Image> filter_isolated_watershed(const Image& img, rust::Slice<const uint32_t> seed1, rust::Slice<const uint32_t> seed2, double threshold, double upper_value_limit, double tolerance, uint8_t replace1, uint8_t replace2) {
+    std::vector<unsigned int> s1(seed1.begin(), seed1.end());
+    std::vector<unsigned int> s2(seed2.begin(), seed2.end());
+    return std::make_unique<Image>(itk::simple::IsolatedWatershed(img, s1, s2, threshold, upper_value_limit, tolerance, replace1, replace2));
+}
+
+// ── Group 5: Three-image ───────────────────────────────────────────────────
+
+std::unique_ptr<Image> filter_normalized_correlation(const Image& image, const Image& mask_image, const Image& template_image) {
+    return std::make_unique<Image>(itk::simple::NormalizedCorrelation(image, mask_image, template_image));
+}
+
+std::unique_ptr<Image> filter_label_map_contour_overlay(const Image& label_map, const Image& feature_image, double opacity, rust::Slice<const uint32_t> dilation_radius, rust::Slice<const uint32_t> contour_thickness, uint32_t slice_dimension, int32_t contour_type, int32_t priority) {
+    std::vector<unsigned int> dr(dilation_radius.begin(), dilation_radius.end());
+    std::vector<unsigned int> ct(contour_thickness.begin(), contour_thickness.end());
+    return std::make_unique<Image>(itk::simple::LabelMapContourOverlay(label_map, feature_image, opacity, dr, ct, slice_dimension,
+        static_cast<itk::simple::LabelMapContourOverlayImageFilter::ContourTypeType>(contour_type),
+        static_cast<itk::simple::LabelMapContourOverlayImageFilter::PriorityType>(priority),
+        std::vector<uint8_t>()));
+}
+
+std::unique_ptr<Image> filter_merge_label_map_two(const Image& img1, const Image& img2, int32_t method) {
+    std::vector<itk::simple::Image> images = {img1, img2};
+    return std::make_unique<Image>(itk::simple::MergeLabelMap(images,
+        static_cast<itk::simple::MergeLabelMapFilter::MethodType>(method)));
+}
+
+// ── Group 6: Image sources (no Image input) ────────────────────────────────
+
+std::unique_ptr<Image> source_gaussian(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> mean, double scale) {
+    std::vector<uint32_t> sz(size.begin(), size.end());
+    std::vector<double> sg(sigma.begin(), sigma.end());
+    std::vector<double> mn(mean.begin(), mean.end());
+    return std::make_unique<Image>(itk::simple::GaussianSource(
+        static_cast<itk::simple::PixelIDValueEnum>(pixel_type),
+        sz, sg, mn, scale));
+}
+
+std::unique_ptr<Image> source_gabor(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> mean, double frequency) {
+    std::vector<uint32_t> sz(size.begin(), size.end());
+    std::vector<double> sg(sigma.begin(), sigma.end());
+    std::vector<double> mn(mean.begin(), mean.end());
+    return std::make_unique<Image>(itk::simple::GaborSource(
+        static_cast<itk::simple::PixelIDValueEnum>(pixel_type),
+        sz, sg, mn, frequency));
+}
+
+std::unique_ptr<Image> source_grid(int32_t pixel_type, rust::Slice<const uint32_t> size, rust::Slice<const double> sigma, rust::Slice<const double> grid_spacing, rust::Slice<const double> grid_offset, double scale) {
+    std::vector<uint32_t> sz(size.begin(), size.end());
+    std::vector<double> sg(sigma.begin(), sigma.end());
+    std::vector<double> gs(grid_spacing.begin(), grid_spacing.end());
+    std::vector<double> go(grid_offset.begin(), grid_offset.end());
+    return std::make_unique<Image>(itk::simple::GridSource(
+        static_cast<itk::simple::PixelIDValueEnum>(pixel_type),
+        sz, sg, gs, go, scale));
+}
+
+std::unique_ptr<Image> source_physical_point(int32_t pixel_type, rust::Slice<const uint32_t> size) {
+    std::vector<uint32_t> sz(size.begin(), size.end());
+    return std::make_unique<Image>(itk::simple::PhysicalPointSource(
+        static_cast<itk::simple::PixelIDValueEnum>(pixel_type), sz));
+}
+
+// ── Final batch ────────────────────────────────────────────────────────────
+std::unique_ptr<Image> filter_aggregate_label_map(const Image& img) {
+    return std::make_unique<Image>(itk::simple::AggregateLabelMap(img));
+}
+
+std::unique_ptr<Image> filter_label_map_to_rgb(const Image& img) {
+    return std::make_unique<Image>(itk::simple::LabelMapToRGB(img, std::vector<uint8_t>()));
+}
+
+std::unique_ptr<Image> filter_extract(const Image& img, rust::Slice<const uint32_t> size, rust::Slice<const int32_t> index) {
+    auto f = itk::simple::ExtractImageFilter();
+    f.SetSize(std::vector<unsigned int>(size.begin(), size.end()));
+    f.SetIndex(std::vector<int>(index.begin(), index.end()));
+    return std::make_unique<Image>(f.Execute(img));
+}
+
+std::unique_ptr<Image> filter_nary_add_two(const Image& img1, const Image& img2) {
+    return std::make_unique<Image>(itk::simple::NaryAdd(std::vector<itk::simple::Image>{img1, img2}));
+}
+
+std::unique_ptr<Image> filter_nary_maximum_two(const Image& img1, const Image& img2) {
+    return std::make_unique<Image>(itk::simple::NaryMaximum(std::vector<itk::simple::Image>{img1, img2}));
+}
+
 } // namespace sitk_rs
